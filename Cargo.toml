@@ -1,0 +1,22 @@
+[package]
+name = "ephemeral-pricing-oracle"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.42.0", features = ["full"] }
+tokio-tungstenite = { version = "0.26.1", features = ["native-tls"] }
+tungstenite = "0.26.1"
+futures-util = "0.3.31"
+serde_json = "1.0.135"
+bigdecimal = "0.4.7"
+borsh = { version = "1.5.3", features = ["derive"] }
+hex = "0.4.3"
+solana-client = "2.1.7"
+solana-sdk = "2.1.7"
+solana-program = "2.1.7"
+clap = { version = "4.5", features = ["derive"] }
+dotenvy = "0.15"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
