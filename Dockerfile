@@ -4,11 +4,11 @@ COPY src ./src
 COPY Cargo.toml Cargo.lock ./
 RUN cargo build --release
 
-FROM debian:bookworm-slim AS runtime
+FROM python:3.7-slim-bookworm AS runtime
 WORKDIR /app
 
 # Install Nginx && python3
-RUN apt-get update && apt-get install -y nginx nodejs npm python3 python3-pip python3-venv && \
+RUN apt-get update && apt-get install -y nginx nodejs npm && \
     npm install -g wscat && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -18,9 +18,9 @@ COPY proxy.py /app/proxy.py
 COPY requirements.txt /app/requirements.txt
 
 # Create a virtual environment and install Python dependencies
-#RUN python3 -m venv /app/venv && \
-#    /app/venv/bin/pip install --upgrade pip && \
-#    /app/venv/bin/pip install -r /app/requirements.txt \
+RUN python3 -m venv /app/venv && \
+    /app/venv/bin/pip install --upgrade pip && \
+    /app/venv/bin/pip install -r /app/requirements.txt
 
 ENV ORACLE_AUTH_HEADER="Basic bWFnaWNibG9ja3M6ZHJ5LXNsaWRlLW92ZXJ0LWNvbG91cg=="
 
@@ -43,7 +43,6 @@ ENV ORACLE_AUTH_HEADER="Basic bWFnaWNibG9ja3M6ZHJ5LXNsaWRlLW92ZXJ0LWNvbG91cg=="
 #    } \
 #}' > /etc/nginx/conf.d/default.conf
 
-
 # Start the application
-#CMD ["sh", "-c", "/app/venv/bin/python proxy.py && /usr/local/bin/ephemeral-pricing-oracle"]
-CMD ["sh", "-c", "/usr/local/bin/ephemeral-pricing-oracle"]
+CMD ["sh", "-c", "/app/venv/bin/python proxy.py & /usr/local/bin/ephemeral-pricing-oracle"]
+#CMD ["sh", "-c", "/usr/local/bin/ephemeral-pricing-oracle"]

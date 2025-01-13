@@ -23,7 +23,7 @@ describe("ephemeral-oracle", () => {
 
   it("Initialize price feed!", async () => {
     const feedAddress = web3.PublicKey.findProgramAddressSync([Buffer.from("price_feed"), Buffer.from("stork"), Buffer.from("SOLUSD")], program.programId)[0];
-    const tx = await program.methods.initializePriceFeed("stork", "SOLUSD", Array.from(feedAddress.toBytes()), 9).accounts({
+    const tx = await program.methods.initializePriceFeed("stork", "SOLUSD", Array.from(feedAddress.toBytes()), 18).accounts({
       payer: anchor.getProvider().publicKey,
       priceFeed: feedAddress,
     }).rpc();

@@ -1,23 +1,29 @@
 mod state;
 
+use crate::state::UpdateData;
 use anchor_lang::prelude::*;
 use ephemeral_rollups_sdk::anchor::{delegate, ephemeral};
 use ephemeral_rollups_sdk::cpi::DelegateConfig;
-use pyth_solana_receiver_sdk::price_update::{PriceUpdateV2, PriceFeedMessage, VerificationLevel};
-use crate::state::UpdateData;
+use pyth_solana_receiver_sdk::price_update::{PriceFeedMessage, PriceUpdateV2, VerificationLevel};
 
-declare_id!("CXkUahL5S7ffjBfrb1Vp4QtnT243HUWDc1nezou1eV1T");
-
+declare_id!("orayZ4JuarAK33zEcRUqiKAXgwj7WSC8eKWCwiMHhTQ");
 
 #[ephemeral]
 #[program]
 pub mod ephemeral_oracle {
     use super::*;
 
-    pub fn initialize_price_feed(ctx: Context<InitializePriceFeed>, _provider: String, _symbol: String, feed_id: [u8; 32], exponent: i32) -> Result<()> {
-        let mut price_feed = PriceUpdateV2::try_deserialize_unchecked
-            (&mut (*ctx.accounts.price_feed.data.borrow()).as_ref(),
-            ).map_err(Into::<Error>::into)?;
+    pub fn initialize_price_feed(
+        ctx: Context<InitializePriceFeed>,
+        _provider: String,
+        _symbol: String,
+        feed_id: [u8; 32],
+        exponent: i32,
+    ) -> Result<()> {
+        let mut price_feed = PriceUpdateV2::try_deserialize_unchecked(
+            &mut (*ctx.accounts.price_feed.data.borrow()).as_ref(),
+        )
+        .map_err(Into::<Error>::into)?;
         price_feed.posted_slot = 0;
         price_feed.verification_level = VerificationLevel::Full;
         price_feed.price_message = PriceFeedMessage {
@@ -34,31 +40,49 @@ pub mod ephemeral_oracle {
         Ok(())
     }
 
-    pub fn update_price_feed(ctx: Context<UpdatePriceFeed>, _provider: String, update_data: UpdateData) -> Result<()> {
-        let mut price_feed = PriceUpdateV2::try_deserialize_unchecked
-            (&mut (*ctx.accounts.price_feed.data.borrow()).as_ref()).map_err(Into::<Error>::into)?;
+    pub fn update_price_feed(
+        ctx: Context<UpdatePriceFeed>,
+        _provider: String,
+        update_data: UpdateData,
+    ) -> Result<()> {
+        let mut price_feed = PriceUpdateV2::try_deserialize_unchecked(
+            &mut (*ctx.accounts.price_feed.data.borrow()).as_ref(),
+        )
+        .map_err(Into::<Error>::into)?;
 
         // TODO: verify the message signature
 
+        let price = (update_data.temporal_numeric_value.quantized_value / 1_000_000) as i64;
+        let exponent = 12;
         price_feed.posted_slot = Clock::get()?.slot;
         price_feed.price_message = PriceFeedMessage {
             feed_id: price_feed.price_message.feed_id,
             ema_conf: price_feed.price_message.ema_conf,
             ema_price: price_feed.price_message.ema_price,
             conf: price_feed.price_message.conf,
-            exponent: price_feed.price_message.exponent,
+            exponent,
             prev_publish_time: price_feed.price_message.publish_time,
-            price: update_data.temporal_numeric_value.quantized_value as i64,
+            price,
             publish_time: Clock::get()?.unix_timestamp,
         };
+
+        msg!("The price update is: {}", price_feed.price_message.price);
         price_feed.try_serialize(&mut *ctx.accounts.price_feed.data.borrow_mut())?;
         Ok(())
     }
 
-    pub fn delegate_price_feed(ctx: Context<DelegatePriceFeed>, provider: String, symbol: String) -> Result<()> {
+    pub fn delegate_price_feed(
+        ctx: Context<DelegatePriceFeed>,
+        provider: String,
+        symbol: String,
+    ) -> Result<()> {
         ctx.accounts.delegate_price_feed(
             &ctx.accounts.payer,
-            &[InitializePriceFeed::seed(), provider.as_bytes(), symbol.as_bytes()],
+            &[
+                InitializePriceFeed::seed(),
+                provider.as_bytes(),
+                symbol.as_bytes(),
+            ],
             DelegateConfig::default(),
         )?;
         Ok(())
@@ -66,9 +90,10 @@ pub mod ephemeral_oracle {
 
     pub fn sample(ctx: Context<Sample>) -> Result<()> {
         // Deserialize the price feed
-        let price_update = PriceUpdateV2::try_deserialize_unchecked
-            (&mut (*ctx.accounts.price_update.data.borrow()).as_ref(),
-            ).map_err(Into::<Error>::into)?;
+        let price_update = PriceUpdateV2::try_deserialize_unchecked(
+            &mut (*ctx.accounts.price_update.data.borrow()).as_ref(),
+        )
+        .map_err(Into::<Error>::into)?;
 
         // get_price_no_older_than will fail if the price update is more than 30 seconds old
         let maximum_age: u64 = 60;
@@ -81,8 +106,16 @@ pub mod ephemeral_oracle {
 
         // Sample output:
         // The price is (7160106530699 ± 5129162301) * 10^-8
-        msg!("The price is ({} ± {}) * 10^{}", price.price, price.conf, price.exponent);
-        msg!("The price is: {}", price.price as f64 * 10_f64.powi(price.exponent));
+        msg!(
+            "The price is ({} ± {}) * 10^-{}",
+            price.price,
+            price.conf,
+            price.exponent
+        );
+        msg!(
+            "The price is: {}",
+            price.price as f64 * 10_f64.powi(-price.exponent)
+        );
         msg!("Slot: {}", price_update.posted_slot);
         msg!("Message: {:?}", price_update.price_message);
 

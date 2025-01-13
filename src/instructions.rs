@@ -4,7 +4,7 @@ use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::pubkey::Pubkey;
 use solana_sdk::pubkey;
 
-const ID: Pubkey = pubkey!("CXkUahL5S7ffjBfrb1Vp4QtnT243HUWDc1nezou1eV1T");
+const ID: Pubkey = pubkey!("orayZ4JuarAK33zEcRUqiKAXgwj7WSC8eKWCwiMHhTQ");
 
 pub fn update_price_feed(
     payer: &Pubkey,

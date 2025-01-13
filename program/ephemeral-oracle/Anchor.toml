@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-ephemeral_oracle = "CXkUahL5S7ffjBfrb1Vp4QtnT243HUWDc1nezou1eV1T"
+ephemeral_oracle = "orayZ4JuarAK33zEcRUqiKAXgwj7WSC8eKWCwiMHhTQ"
 
 [registry]
 url = "https://api.apr.dev"
