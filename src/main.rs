@@ -3,20 +3,26 @@ mod chain_pusher;
 mod instructions;
 mod price_parser;
 
+use bytes::BytesMut;
+use clap::Parser;
+use native_tls::TlsConnector as NativeTlsConnector;
+use ratchet_rs::{
+    deflate::DeflateExtProvider, HeaderValue, Message, PayloadType, TryIntoRequest, UpgradedClient,
+    WebSocketClientBuilder, WebSocketStream,
+};
+use solana_sdk::signature::{Keypair, Signer};
+use std::sync::Arc;
+use tokio::net::TcpStream;
+use tokio::time::{self, Duration};
+use tokio_native_tls::TlsConnector;
+use tracing::{debug, error, info, warn};
+use url::Url;
+
 use crate::args::{
     get_auth_header, get_price_feeds, get_private_key, get_solana_cluster, get_ws_url, Args,
 };
 use crate::chain_pusher::ChainPusher;
 use crate::price_parser::parse_price_update;
-use clap::Parser;
-use futures_util::{SinkExt, StreamExt};
-use solana_sdk::signature::{Keypair, Signer};
-use tokio::time::{self, Duration};
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
-use tracing::{debug, error, info, warn};
-use tungstenite::client::IntoClientRequest;
-use tungstenite::http::header::AUTHORIZATION;
-use tungstenite::http::HeaderValue;
 
 #[tokio::main]
 async fn main() {
@@ -31,8 +37,8 @@ async fn main() {
 
     let payer = Keypair::from_base58_string(&private_key);
     info!(wallet_pubkey = ?payer.pubkey(), "Identity initialized");
-    let chain_pusher = ChainPusher::new(&cluster_url, payer);
-    let chain_pusher = std::sync::Arc::new(chain_pusher);
+    let chain_pusher = Arc::new(ChainPusher::new(&cluster_url, payer));
+
     loop {
         if let Err(e) =
             run_websocket_client(chain_pusher.clone(), &ws_url, &auth_header, &price_feeds).await
@@ -42,50 +48,65 @@ async fn main() {
         time::sleep(Duration::from_secs(5)).await;
     }
 }
+
 async fn run_websocket_client(
-    chain_pusher: std::sync::Arc<ChainPusher>,
+    chain_pusher: Arc<ChainPusher>,
     url: &str,
     auth_header: &str,
     price_feeds: &[String],
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(url = %url, "Establishing WebSocket connection");
 
-    let mut request = url.into_client_request()?;
+    let url = Url::parse(url)?;
+    let host = url.host_str().ok_or("Missing host in URL")?;
+    let address = format!("{}:{}", host, url.port().unwrap_or(443));
+    let stream = TcpStream::connect(address).await?;
+
+    let mut request = url.clone().try_into_request()?;
     request
         .headers_mut()
-        .insert(AUTHORIZATION, HeaderValue::from_str(auth_header)?);
-    let (ws_stream, _) = connect_async(request).await?;
+        .insert("AUTHORIZATION", HeaderValue::from_str(auth_header)?);
 
-    info!("WebSocket connection established successfully");
+    let stream: Box<dyn WebSocketStream> = if url.scheme() == "wss" {
+        let tls_connector = TlsConnector::from(NativeTlsConnector::new()?);
+        Box::new(tls_connector.connect(host, stream).await?)
+    } else {
+        Box::new(stream)
+    };
 
-    let (mut write, mut read) = ws_stream.split();
+    let upgraded = WebSocketClientBuilder::default()
+        .extension(DeflateExtProvider::default())
+        .subscribe(stream, request)
+        .await?;
+
+    let UpgradedClient { mut websocket, .. } = upgraded;
+    info!("WebSocket connected.");
+
+    let mut buf = BytesMut::new();
     let subscribe_message = serde_json::json!({
         "type": "subscribe",
         "data": price_feeds,
     });
     let message_text = serde_json::to_string(&subscribe_message)?;
-    write.send(Message::text(message_text)).await?;
+    websocket
+        .write(message_text.as_bytes(), PayloadType::Text)
+        .await?;
 
-    info!("Subscribed successfully.");
+    info!("Subscribed to price feeds.");
 
-    while let Some(msg) = read.next().await {
-        match msg {
-            Ok(message) => {
-                if let Message::Text(msg) = message {
-                    match parse_price_update(&msg.to_string()) {
-                        Ok(updates) => {
-                            debug!(updates_count = updates.len(), "Processing price updates");
-                            chain_pusher.send_price_updates(&updates).await?;
-                        }
-                        Err(e) => warn!(error = ?e, "Failed to parse price update"),
-                    }
+    while let Ok(message) = websocket.read(&mut buf).await {
+        match message {
+            Message::Text => match parse_price_update(&String::from_utf8_lossy(&buf)) {
+                Ok(updates) => {
+                    debug!(updates_count = updates.len(), "Processing price updates");
+                    chain_pusher.send_price_updates(&updates).await?;
                 }
-            }
-            Err(e) => {
-                error!(error = ?e, "WebSocket error occurred");
-                break;
-            }
+                Err(e) => warn!(error = ?e, "Failed to parse price update"),
+            },
+            Message::Close(_) => return Err("WebSocket closed".into()),
+            _ => {}
         }
+        buf.clear();
     }
     Ok(())
 }
