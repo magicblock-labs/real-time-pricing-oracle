@@ -70,14 +70,15 @@ pub struct Sample<'info> {
 
 - [programs/ephemeral-oracle/programs/ephemeral-oracle/src/lib.rs](programs/ephemeral-oracle/programs/ephemeral-oracle/src/lib.rs)
 
-## Price Feeds
+## Example Price Feeds
 
-- Example of price feeds
-  - Stork (SOL/USD): `BGkCTVG77Q2MFyEE3KypfZ8EUzw72VZZvDpjV98Zj7iJ` (https://devnet.magicblock.app)
-  - Pyth Lazer (SOL/USD): `7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D` (https://devnet.magicblock.app)
-  - Pyth Lazer (BTC/USD): `74UjNSaPWH8W72HNZDgKiMXkiKt5o2s6evSkVm9CsZpD` (https://devnet.magicblock.app)
-  - Pyth Lazer (ETH/USD): `NY1S3R56xVou4YTAmUxXjvKwNmYgQXeWPqFmLss4ihg` (https://devnet.magicblock.app)
-  - Pyth Lazer (USDC/USD): `J5kD2RwveK5w7HjhDZQdiymDDyWH72yjtaYtD55YyoGu` (https://devnet.magicblock.app)
+| Asset Pair | Feed Provider | Address | Endpoint |
+|------------|--------------|---------|-----------|
+| SOL/USD | Stork | `BGkCTVG77Q2MFyEE3KypfZ8EUzw72VZZvDpjV98Zj7iJ` | https://devnet.magicblock.app |
+| SOL/USD | Pyth Lazer | `7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D` | https://devnet.magicblock.app |
+| BTC/USD | Pyth Lazer | `74UjNSaPWH8W72HNZDgKiMXkiKt5o2s6evSkVm9CsZpD` | https://devnet.magicblock.app |
+| ETH/USD | Pyth Lazer | `NY1S3R56xVou4YTAmUxXjvKwNmYgQXeWPqFmLss4ihg` | https://devnet.magicblock.app |
+| USDC/USD | Pyth Lazer | `J5kD2RwveK5w7HjhDZQdiymDDyWH72yjtaYtD55YyoGu` | https://devnet.magicblock.app |
 
 ### Subcribe to a price feed
 
