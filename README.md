@@ -75,6 +75,9 @@ pub struct Sample<'info> {
 - Example of price feeds
   - Stork (SOL/USD): `BGkCTVG77Q2MFyEE3KypfZ8EUzw72VZZvDpjV98Zj7iJ` (https://devnet.magicblock.app)
   - Pyth Lazer (SOL/USD): `7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D` (https://devnet.magicblock.app)
+  - Pyth Lazer (BTC/USD): `74UjNSaPWH8W72HNZDgKiMXkiKt5o2s6evSkVm9CsZpD` (https://devnet.magicblock.app)
+  - Pyth Lazer (ETH/USD): `NY1S3R56xVou4YTAmUxXjvKwNmYgQXeWPqFmLss4ihg` (https://devnet.magicblock.app)
+  - Pyth Lazer (USDC/USD): `J5kD2RwveK5w7HjhDZQdiymDDyWH72yjtaYtD55YyoGu` (https://devnet.magicblock.app)
 
 ### Subcribe to a price feed
 
