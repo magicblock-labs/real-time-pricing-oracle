@@ -1,7 +1,16 @@
 mod args;
-mod chain_pusher;
+mod blockhash_cache;
 mod instructions;
-mod price_parser;
+mod types;
+
+mod stork {
+    pub mod chain_pusher;
+    pub mod price_parser;
+}
+mod pyth_lazer {
+    pub mod chain_pusher;
+    pub mod price_parser;
+}
 
 use bytes::BytesMut;
 use clap::Parser;
@@ -21,8 +30,9 @@ use url::Url;
 use crate::args::{
     get_auth_header, get_price_feeds, get_private_key, get_solana_cluster, get_ws_url, Args,
 };
-use crate::chain_pusher::ChainPusher;
-use crate::price_parser::parse_price_update;
+use crate::pyth_lazer::chain_pusher::PythChainPusher;
+use crate::stork::chain_pusher::StorkChainPusher;
+use crate::types::ChainPusher;
 
 #[tokio::main]
 async fn main() {
@@ -37,11 +47,16 @@ async fn main() {
 
     let payer = Keypair::from_base58_string(&private_key);
     info!(wallet_pubkey = ?payer.pubkey(), "Identity initialized");
-    let chain_pusher = Arc::new(ChainPusher::new(&cluster_url, payer));
+
+    let chain_pusher: Arc<dyn ChainPusher> = if ws_url.contains("stork") {
+        Arc::new(StorkChainPusher::new(&cluster_url, payer).await)
+    } else {
+        Arc::new(PythChainPusher::new(&cluster_url, payer).await)
+    };
 
     loop {
         if let Err(e) =
-            run_websocket_client(chain_pusher.clone(), &ws_url, &auth_header, &price_feeds).await
+            run_websocket_client(&chain_pusher, &ws_url, &auth_header, &price_feeds).await
         {
             error!(error = ?e, "WebSocket connection error, attempting reconnection");
         }
@@ -50,7 +65,7 @@ async fn main() {
 }
 
 async fn run_websocket_client(
-    chain_pusher: Arc<ChainPusher>,
+    chain_pusher: &Arc<dyn ChainPusher>,
     url: &str,
     auth_header: &str,
     price_feeds: &[String],
@@ -83,11 +98,7 @@ async fn run_websocket_client(
     info!("WebSocket connected.");
 
     let mut buf = BytesMut::new();
-    let subscribe_message = serde_json::json!({
-        "type": "subscribe",
-        "data": price_feeds,
-    });
-    let message_text = serde_json::to_string(&subscribe_message)?;
+    let message_text = chain_pusher.feeds_subscription_msg(price_feeds).await?;
     websocket
         .write(message_text.as_bytes(), PayloadType::Text)
         .await?;
@@ -96,11 +107,11 @@ async fn run_websocket_client(
 
     while let Ok(message) = websocket.read(&mut buf).await {
         match message {
-            Message::Text => match parse_price_update(&String::from_utf8_lossy(&buf)) {
-                Ok(updates) => {
-                    debug!(updates_count = updates.len(), "Processing price updates");
-                    chain_pusher.send_price_updates(&updates).await?;
-                }
+            Message::Text => match chain_pusher
+                .process_update(&String::from_utf8_lossy(&buf))
+                .await
+            {
+                Ok(..) => debug!("Processed price updates"),
                 Err(e) => warn!(error = ?e, "Failed to parse price update"),
             },
             Message::Close(_) => return Err("WebSocket closed".into()),

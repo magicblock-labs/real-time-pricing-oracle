@@ -4,6 +4,7 @@ This repository contains a Solana program designed to inject price feeds into ep
 
 Currently supports:
 - [Stork price feeds](https://www.stork.network/)
+- [Pyth lazer](https://docs.pyth.network/lazer)
 
 ## Overview
 
@@ -69,3 +70,8 @@ pub struct Sample<'info> {
 
 - [programs/ephemeral-oracle/programs/ephemeral-oracle/src/lib.rs](programs/ephemeral-oracle/programs/ephemeral-oracle/src/lib.rs)
 
+## Price Feeds
+
+- Example of price feeds
+  - Stork (SOL/USD): `BGkCTVG77Q2MFyEE3KypfZ8EUzw72VZZvDpjV98Zj7iJ` (https://devnet.magicblock.app)
+  - Pyth Lazer (SOL/USD): `7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D` (https://devnet.magicblock.app)

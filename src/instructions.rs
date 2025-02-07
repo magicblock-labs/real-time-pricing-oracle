@@ -1,4 +1,4 @@
-use crate::price_parser::UpdateData;
+use crate::types::UpdateData;
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::instruction::{AccountMeta, Instruction};
 use solana_program::pubkey::Pubkey;

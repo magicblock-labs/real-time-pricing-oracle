@@ -52,21 +52,23 @@ pub mod ephemeral_oracle {
 
         // TODO: verify the message signature
 
-        let price = (update_data.temporal_numeric_value.quantized_value / 1_000_000) as i64;
-        let exponent = 12;
+        let price = update_data.temporal_numeric_value.quantized_value  as i64;
+
         price_feed.posted_slot = Clock::get()?.slot;
         price_feed.price_message = PriceFeedMessage {
             feed_id: price_feed.price_message.feed_id,
             ema_conf: price_feed.price_message.ema_conf,
             ema_price: price_feed.price_message.ema_price,
             conf: price_feed.price_message.conf,
-            exponent,
+            exponent: price_feed.price_message.exponent,
             prev_publish_time: price_feed.price_message.publish_time,
             price,
             publish_time: Clock::get()?.unix_timestamp,
         };
 
         msg!("The price update is: {}", price_feed.price_message.price);
+        msg!("The exponent is: {}", price_feed.price_message.exponent);
+
         price_feed.try_serialize(&mut *ctx.accounts.price_feed.data.borrow_mut())?;
         Ok(())
     }
@@ -101,7 +103,6 @@ pub mod ephemeral_oracle {
         // Get the price feed id
         let feed_id: [u8; 32] = ctx.accounts.price_update.key().to_bytes();
 
-        msg!("The price update is: {}", price_update.price_message.price);
         let price = price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &feed_id)?;
 
         // Sample output:
