@@ -75,3 +75,21 @@ pub struct Sample<'info> {
 - Example of price feeds
   - Stork (SOL/USD): `BGkCTVG77Q2MFyEE3KypfZ8EUzw72VZZvDpjV98Zj7iJ` (https://devnet.magicblock.app)
   - Pyth Lazer (SOL/USD): `7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D` (https://devnet.magicblock.app)
+
+### Subcribe to a price feed
+
+Connect:
+
+```bash
+wscat -c "wss://devnet.magicblock.app"
+```
+
+Subscribe:
+
+```bash
+{"jsonrpc":"2.0","id":1,"method":"accountSubscribe","params":["7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D",{"encoding":"jsonParsed","commitment":"confirmed"}]}
+```
+
+
+
+
