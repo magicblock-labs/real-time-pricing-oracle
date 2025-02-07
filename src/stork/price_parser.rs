@@ -1,25 +1,7 @@
+use crate::types::{TemporalNumericValue, UpdateData};
 use bigdecimal::{BigDecimal, ToPrimitive};
-use borsh::{BorshDeserialize, BorshSerialize};
 use serde_json::Value;
 use std::str::FromStr;
-
-#[derive(BorshSerialize, BorshDeserialize, Clone, Default, Debug)]
-pub struct TemporalNumericValue {
-    pub timestamp_ns: u64,
-    pub quantized_value: i128,
-}
-
-#[derive(BorshSerialize, BorshDeserialize, Clone, Debug)]
-pub struct UpdateData {
-    pub symbol: String,
-    pub id: [u8; 32],
-    pub temporal_numeric_value: TemporalNumericValue,
-    pub publisher_merkle_root: [u8; 32],
-    pub value_compute_alg_hash: [u8; 32],
-    pub r: [u8; 32],
-    pub s: [u8; 32],
-    pub v: u8,
-}
 
 pub fn parse_price_update(message: &str) -> Result<Vec<UpdateData>, Box<dyn std::error::Error>> {
     let value: Value = serde_json::from_str(message)?;
@@ -39,10 +21,10 @@ pub fn parse_price_update(message: &str) -> Result<Vec<UpdateData>, Box<dyn std:
     Ok(price_updates)
 }
 fn parse_price_data_to_update(
-    asset_id: &String,
-    price_data: &Value,
+    symbol: &String,
+    message: &Value,
 ) -> Result<UpdateData, Box<dyn std::error::Error>> {
-    let stork_signed = price_data
+    let stork_signed = message
         .get("stork_signed_price")
         .ok_or("Missing stork_signed_price")?;
 
@@ -51,12 +33,12 @@ fn parse_price_data_to_update(
         .and_then(|ts| ts.get("signature"))
         .ok_or("Missing signature")?;
 
-    let timestamp = price_data
+    let timestamp = message
         .get("timestamp")
         .and_then(|t| t.as_u64())
         .ok_or("Missing timestamp")?;
 
-    let price_str = price_data
+    let price_str = message
         .get("price")
         .and_then(|p| p.as_str())
         .ok_or("Missing price")?;
@@ -112,11 +94,13 @@ fn parse_price_data_to_update(
     let v = u8::from_str_radix(&v_hex[2..], 16)?;
 
     Ok(UpdateData {
-        symbol: asset_id.to_string(),
+        symbol: symbol.to_string(),
         id,
         temporal_numeric_value: TemporalNumericValue {
             timestamp_ns: timestamp,
-            quantized_value: price.to_i128().unwrap_or_default(),
+            quantized_value: (price / BigDecimal::from(1_000_000))
+                .to_i128()
+                .unwrap_or_default(),
         },
         publisher_merkle_root,
         value_compute_alg_hash,

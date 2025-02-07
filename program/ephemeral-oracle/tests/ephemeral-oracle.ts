@@ -8,7 +8,9 @@ describe("ephemeral-oracle", () => {
 
   const program = anchor.workspace.EphemeralOracle as Program<EphemeralOracle>;
 
-  const feedAddress = web3.PublicKey.findProgramAddressSync([Buffer.from("price_feed"), Buffer.from("stork"), Buffer.from("SOLUSD")], program.programId)[0];
+  const exampleFeedAddress = web3.PublicKey.findProgramAddressSync([Buffer.from("price_feed"), Buffer.from("stork"), Buffer.from("SOLUSD")], program.programId)[0];
+  // 6 == SOLUSD, from https://pyth-lazer-staging.dourolabs.app/history/v1/symbols
+  const exampleFeedAddress2 = web3.PublicKey.findProgramAddressSync([Buffer.from("price_feed"), Buffer.from("pyth-lazer"), Buffer.from("6")], program.programId)[0];
 
   const providerEphemeralRollup = new anchor.AnchorProvider(
       new anchor.web3.Connection(
@@ -22,10 +24,17 @@ describe("ephemeral-oracle", () => {
   const ephemeralProgram = new Program(program.idl, providerEphemeralRollup);
 
   it("Initialize price feed!", async () => {
-    const feedAddress = web3.PublicKey.findProgramAddressSync([Buffer.from("price_feed"), Buffer.from("stork"), Buffer.from("SOLUSD")], program.programId)[0];
-    const tx = await program.methods.initializePriceFeed("stork", "SOLUSD", Array.from(feedAddress.toBytes()), 18).accounts({
+    const tx = await program.methods.initializePriceFeed("stork", "SOLUSD", Array.from(exampleFeedAddress.toBytes()), 18).accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: feedAddress,
+      priceFeed: exampleFeedAddress,
+    }).rpc();
+    console.log("Initialize price feed signature", tx);
+  });
+
+  it("Initialize price feed 2!", async () => {
+    const tx = await program.methods.initializePriceFeed("pyth-lazer", "6", Array.from(exampleFeedAddress2.toBytes()), 8).accounts({
+      payer: anchor.getProvider().publicKey,
+      priceFeed: exampleFeedAddress2,
     }).rpc();
     console.log("Initialize price feed signature", tx);
   });
@@ -46,15 +55,15 @@ describe("ephemeral-oracle", () => {
     };
     const tx = await program.methods.updatePriceFeed("stork", updateData).accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: feedAddress,
+      priceFeed: exampleFeedAddress,
     }).rpc();
     console.log("Update price feed signature", tx);
   });
 
   it("Delegate price feed!", async () => {
-    const tx = await program.methods.delegatePriceFeed("stork", "SOLUSD").accounts({
+    const tx = await program.methods.delegatePriceFeed("pyth-lazer", "6").accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: feedAddress,
+      priceFeed: exampleFeedAddress2,
     }).rpc();
     console.log("Delegate price feed signature", tx);
   });
@@ -75,14 +84,21 @@ describe("ephemeral-oracle", () => {
     };
     const tx = await ephemeralProgram.methods.updatePriceFeed("stork", updateData).accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: feedAddress,
+      priceFeed: exampleFeedAddress,
     }).rpc();
     console.log("Update price feed signature", tx);
   });
 
-  it.only("Get price!", async () => {
+  it.only("Get SOL/USD price from Stork!", async () => {
     const tx = await ephemeralProgram.methods.sample().accounts({
-      priceUpdate: feedAddress,
+      priceUpdate: exampleFeedAddress,
+    }).rpc();
+    console.log("Your transaction signature", tx);
+  });
+
+  it.only("Get SOL/USD price Pyth!", async () => {
+    const tx = await ephemeralProgram.methods.sample().accounts({
+      priceUpdate: exampleFeedAddress2,
     }).rpc();
     console.log("Your transaction signature", tx);
   });
