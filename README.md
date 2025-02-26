@@ -79,6 +79,11 @@ pub struct Sample<'info> {
 | ETH/USD | Pyth Lazer | `NY1S3R56xVou4YTAmUxXjvKwNmYgQXeWPqFmLss4ihg` | https://devnet.magicblock.app |
 | USDC/USD | Pyth Lazer | `J5kD2RwveK5w7HjhDZQdiymDDyWH72yjtaYtD55YyoGu` | https://devnet.magicblock.app |
 
+
+## Demo
+
+https://realtime-price-tracker.vercel.app/
+
 ### Subcribe to a price feed
 
 Connect:
