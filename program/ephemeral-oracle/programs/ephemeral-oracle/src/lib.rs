@@ -2,7 +2,10 @@ mod state;
 
 use crate::state::UpdateData;
 use anchor_lang::prelude::*;
-use ephemeral_rollups_sdk::anchor::{delegate, ephemeral};
+use anchor_lang::prelude::borsh::BorshSchema;
+use ephemeral_rollups_sdk::anchor::{commit, delegate, ephemeral};
+use ephemeral_rollups_sdk::ephem::commit_and_undelegate_accounts;
+use ephemeral_rollups_sdk::utils::close_pda;
 use ephemeral_rollups_sdk::cpi::DelegateConfig;
 use pyth_solana_receiver_sdk::price_update::{PriceFeedMessage, PriceUpdateV2, VerificationLevel};
 
@@ -20,10 +23,7 @@ pub mod ephemeral_oracle {
         feed_id: [u8; 32],
         exponent: i32,
     ) -> Result<()> {
-        let mut price_feed = PriceUpdateV2::try_deserialize_unchecked(
-            &mut (*ctx.accounts.price_feed.data.borrow()).as_ref(),
-        )
-        .map_err(Into::<Error>::into)?;
+        let price_feed = &mut ctx.accounts.price_feed;
         price_feed.posted_slot = 0;
         price_feed.verification_level = VerificationLevel::Full;
         price_feed.price_message = PriceFeedMessage {
@@ -36,7 +36,6 @@ pub mod ephemeral_oracle {
             prev_publish_time: Clock::get()?.unix_timestamp,
             publish_time: Clock::get()?.unix_timestamp,
         };
-        price_feed.try_serialize(&mut *ctx.accounts.price_feed.data.borrow_mut())?;
         Ok(())
     }
 
@@ -45,10 +44,7 @@ pub mod ephemeral_oracle {
         _provider: String,
         update_data: UpdateData,
     ) -> Result<()> {
-        let mut price_feed = PriceUpdateV2::try_deserialize_unchecked(
-            &mut (*ctx.accounts.price_feed.data.borrow()).as_ref(),
-        )
-        .map_err(Into::<Error>::into)?;
+        let price_feed = &mut ctx.accounts.price_feed;
 
         // TODO: verify the message signature
 
@@ -65,11 +61,12 @@ pub mod ephemeral_oracle {
             price,
             publish_time: Clock::get()?.unix_timestamp,
         };
+        price_feed.verification_level = VerificationLevel::Full;
 
         msg!("The price update is: {}", price_feed.price_message.price);
         msg!("The exponent is: {}", price_feed.price_message.exponent);
 
-        price_feed.try_serialize(&mut *ctx.accounts.price_feed.data.borrow_mut())?;
+        //price_feed.try_serialize(&mut *ctx.accounts.price_feed.data.borrow_mut())?;
         Ok(())
     }
 
@@ -87,6 +84,21 @@ pub mod ephemeral_oracle {
             ],
             DelegateConfig::default(),
         )?;
+        Ok(())
+    }
+
+    pub fn undelegate_price_feed(ctx: Context<UndelegatePriceFeed>, _provider: String, _symbol: String) -> Result<()> {
+        commit_and_undelegate_accounts(
+            &ctx.accounts.payer,
+            vec![&ctx.accounts.price_feed.to_account_info()],
+            &ctx.accounts.magic_context,
+            &ctx.accounts.magic_program,
+        )?;
+        Ok(())
+    }
+
+    pub fn close_price_feed(ctx: Context<ClosePriceFeed>, _provider: String, _symbol: String) -> Result<()> {
+        close_pda(&ctx.accounts.price_feed, &ctx.accounts.payer.to_account_info())?;
         Ok(())
     }
 
@@ -131,7 +143,7 @@ pub struct InitializePriceFeed<'info> {
     pub payer: Signer<'info>,
     /// CHECK: the correct price feed
     #[account(init, payer = payer, space = PriceUpdateV2::LEN, seeds = [InitializePriceFeed::seed(), provider.as_bytes(), symbol.as_bytes()], bump)]
-    pub price_feed: AccountInfo<'info>,
+    pub price_feed: Account<'info, PriceUpdateV3>,
     pub system_program: Program<'info, System>,
 }
 
@@ -142,7 +154,7 @@ pub struct UpdatePriceFeed<'info> {
     pub payer: Signer<'info>,
     /// CHECK: the correct price feed
     #[account(mut, seeds = [InitializePriceFeed::seed(), provider.as_bytes(), update_data.symbol.as_bytes()], bump)]
-    pub price_feed: AccountInfo<'info>,
+    pub price_feed: Account<'info, PriceUpdateV3>,
 }
 
 #[delegate]
@@ -154,6 +166,24 @@ pub struct DelegatePriceFeed<'info> {
     #[account(mut, del, seeds = [InitializePriceFeed::seed(), provider.as_bytes(), symbol.as_bytes()], bump)]
     pub price_feed: AccountInfo<'info>,
 }
+
+#[commit]
+#[derive(Accounts)]
+#[instruction(provider: String, symbol: String)]
+pub struct UndelegatePriceFeed<'info> {
+    pub payer: Signer<'info>,
+    /// CHECK The pda to undelegate
+    #[account(mut, seeds = [InitializePriceFeed::seed(), provider.as_bytes(), symbol.as_bytes()], bump)]
+    pub price_feed: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(provider: String, symbol: String)]
+pub struct ClosePriceFeed<'info> {
+    pub payer: Signer<'info>,
+    /// CHECK The pda to close
+    #[account(mut, seeds = [InitializePriceFeed::seed(), provider.as_bytes(), symbol.as_bytes()], bump)]
+    pub price_feed: AccountInfo<'info>}
 
 #[derive(Accounts)]
 pub struct Sample<'info> {
@@ -167,4 +197,13 @@ impl InitializePriceFeed<'_> {
     pub fn seed() -> &'static [u8] {
         b"price_feed"
     }
+}
+
+#[account]
+#[derive(BorshSchema)]
+pub struct PriceUpdateV3 {
+    pub write_authority: Pubkey,
+    pub verification_level: VerificationLevel,
+    pub price_message: PriceFeedMessage,
+    pub posted_slot: u64,
 }

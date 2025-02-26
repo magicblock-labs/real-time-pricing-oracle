@@ -10,7 +10,10 @@ describe("ephemeral-oracle", () => {
 
   const exampleFeedAddress = web3.PublicKey.findProgramAddressSync([Buffer.from("price_feed"), Buffer.from("stork"), Buffer.from("SOLUSD")], program.programId)[0];
   // 6 == SOLUSD, from https://pyth-lazer-staging.dourolabs.app/history/v1/symbols
-  const exampleFeedAddress2 = web3.PublicKey.findProgramAddressSync([Buffer.from("price_feed"), Buffer.from("pyth-lazer"), Buffer.from("6")], program.programId)[0];
+  // 1 == BTCUSD
+  // 2 == ETHUSD
+  // 7 == USDCUSD
+  const exampleFeedAddress2 = web3.PublicKey.findProgramAddressSync([Buffer.from("price_feed"), Buffer.from("pyth-lazer"), Buffer.from("2")], program.programId)[0];
 
   const providerEphemeralRollup = new anchor.AnchorProvider(
       new anchor.web3.Connection(
@@ -32,7 +35,7 @@ describe("ephemeral-oracle", () => {
   });
 
   it("Initialize price feed 2!", async () => {
-    const tx = await program.methods.initializePriceFeed("pyth-lazer", "6", Array.from(exampleFeedAddress2.toBytes()), 8).accounts({
+    const tx = await program.methods.initializePriceFeed("pyth-lazer", "2", Array.from(exampleFeedAddress2.toBytes()), 8).accounts({
       payer: anchor.getProvider().publicKey,
       priceFeed: exampleFeedAddress2,
     }).rpc();
@@ -51,7 +54,7 @@ describe("ephemeral-oracle", () => {
       valueComputeAlgHash: Array(32).fill(0),
       r: Array(32).fill(0),
       s: Array(32).fill(0),
-      v: 0
+      v: 0,
     };
     const tx = await program.methods.updatePriceFeed("stork", updateData).accounts({
       payer: anchor.getProvider().publicKey,
@@ -61,17 +64,33 @@ describe("ephemeral-oracle", () => {
   });
 
   it("Delegate price feed!", async () => {
-    const tx = await program.methods.delegatePriceFeed("pyth-lazer", "6").accounts({
+    const tx = await program.methods.delegatePriceFeed("pyth-lazer", "2").accounts({
       payer: anchor.getProvider().publicKey,
       priceFeed: exampleFeedAddress2,
     }).rpc();
     console.log("Delegate price feed signature", tx);
   });
 
+  it("Undelegate price feed!", async () => {
+    const tx = await ephemeralProgram.methods.undelegatePriceFeed("pyth-lazer", "2").accounts({
+      payer: anchor.getProvider().publicKey,
+      priceFeed: exampleFeedAddress2,
+    }).rpc();
+    console.log("Delegate price feed signature", tx);
+  });
+
+  it("Close price feed!", async () => {
+    const tx = await program.methods.closePriceFeed("pyth-lazer", "2").accounts({
+      payer: anchor.getProvider().publicKey,
+      priceFeed: exampleFeedAddress2,
+    }).rpc({skipPreflight: true});
+    console.log("Delegate price feed signature", tx);
+  });
+
   it("Update price feed delegated!", async () => {
     const updateData = {
-      symbol: "SOLUSD",
-      id: Array(32).fill(0),
+      symbol: "6",
+      id: Array.from(exampleFeedAddress2.toBytes()),
       temporalNumericValue: {
         timestampNs: new anchor.BN(Date.now()),
         quantizedValue: new anchor.BN(1000000)
@@ -80,26 +99,30 @@ describe("ephemeral-oracle", () => {
       valueComputeAlgHash: Array(32).fill(0),
       r: Array(32).fill(0),
       s: Array(32).fill(0),
-      v: 0
+      v: 4
     };
-    const tx = await ephemeralProgram.methods.updatePriceFeed("stork", updateData).accounts({
+    const tx = await ephemeralProgram.methods.updatePriceFeed("pyth-lazer", updateData).accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: exampleFeedAddress,
+      priceFeed: exampleFeedAddress2,
     }).rpc();
     console.log("Update price feed signature", tx);
   });
 
-  it.only("Get SOL/USD price from Stork!", async () => {
-    const tx = await ephemeralProgram.methods.sample().accounts({
+  it("Get SOL/USD price from Stork!", async () => {
+    const tx = await program.methods.sample().accounts({
       priceUpdate: exampleFeedAddress,
     }).rpc();
-    console.log("Your transaction signature", tx);
+    console.log("Use price transaction signature", tx);
   });
 
-  it.only("Get SOL/USD price Pyth!", async () => {
+  it("Get SOL/USD price Pyth!", async () => {
     const tx = await ephemeralProgram.methods.sample().accounts({
       priceUpdate: exampleFeedAddress2,
     }).rpc();
+    providerEphemeralRollup.connection.getAccountInfo(exampleFeedAddress2).then((data) => {
+      const decodedData = program.account.priceUpdateV3.coder.accounts.decode("priceUpdateV3", Buffer.from(data.data));
+      console.log("Decoded data", decodedData);
+    });
     console.log("Your transaction signature", tx);
   });
 
