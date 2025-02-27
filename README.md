@@ -1,10 +1,11 @@
-# Ephemeral Pricing Oracle
+# Real-time Pricing Oracle
 
 This repository contains a Solana program designed to inject price feeds into ephemeral rollups. It includes a chain pusher that subscribes to and posts price updates on-chain, as well as an example of how to consume price data in a Solana program.
 
 Currently supports:
+- [Pyth Lazer](https://docs.pyth.network/lazer)
 - [Stork price feeds](https://www.stork.network/)
-- [Pyth lazer](https://docs.pyth.network/lazer)
+
 
 ## Overview
 
