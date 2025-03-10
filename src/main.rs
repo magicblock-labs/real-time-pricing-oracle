@@ -99,6 +99,9 @@ async fn run_websocket_client(
 
     let mut buf = BytesMut::new();
     let message_text = chain_pusher.feeds_subscription_msg(price_feeds).await?;
+
+    info!(message = %message_text, "Subscribing to price feeds");
+
     websocket
         .write(message_text.as_bytes(), PayloadType::Text)
         .await?;

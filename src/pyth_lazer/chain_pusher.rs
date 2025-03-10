@@ -72,7 +72,8 @@ struct PythSymbol {
     description: String,
     asset_type: String,
     exponent: i32,
-    cmc_id: i32,
+    cmc_id: Option<i32>,
+    interval: Option<String>,
 }
 
 impl PythChainPusher {
