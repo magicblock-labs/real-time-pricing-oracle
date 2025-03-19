@@ -27,7 +27,7 @@ impl ChainPusher for StorkChainPusher {
         StorkChainPusher {
             rpc_client,
             payer: payer_keypair,
-            provider: "stork".to_string(),
+            provider: "stork-oracle".to_string(),
             blockhash_cache: BlockhashCache::new(rpc_clone).await,
         }
     }

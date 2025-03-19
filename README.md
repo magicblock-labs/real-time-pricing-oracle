@@ -73,13 +73,13 @@ pub struct Sample<'info> {
 
 ## Example Price Feeds
 
-| Asset Pair | Feed Provider | Address | Endpoint |
-|------------|--------------|---------|-----------|
-| SOL/USD | Pyth Lazer | `7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D` | https://devnet.magicblock.app |
-| BTC/USD | Pyth Lazer | `74UjNSaPWH8W72HNZDgKiMXkiKt5o2s6evSkVm9CsZpD` | https://devnet.magicblock.app |
-| ETH/USD | Pyth Lazer | `NY1S3R56xVou4YTAmUxXjvKwNmYgQXeWPqFmLss4ihg` | https://devnet.magicblock.app |
-| USDC/USD | Pyth Lazer | `J5kD2RwveK5w7HjhDZQdiymDDyWH72yjtaYtD55YyoGu` | https://devnet.magicblock.app |
-
+| Asset Pair | Feed Provider | Address                                          |
+|------------|---------------|--------------------------------------------------|
+| SOL/USD    | Pyth Lazer    | [7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D](https://explorer.solana.com/address/7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
+| BTC/USD    | Pyth Lazer    | [74UjNSaPWH8W72HNZDgKiMXkiKt5o2s6evSkVm9CsZpD](https://explorer.solana.com/address/74UjNSaPWH8W72HNZDgKiMXkiKt5o2s6evSkVm9CsZpD?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
+| ETH/USD    | Pyth Lazer    | [NY1S3R56xVou4YTAmUxXjvKwNmYgQXeWPqFmLss4ihg](https://explorer.solana.com/address/NY1S3R56xVou4YTAmUxXjvKwNmYgQXeWPqFmLss4ihg?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
+| USDC/USD   | Pyth Lazer    | [J5kD2RwveK5w7HjhDZQdiymDDyWH72yjtaYtD55YyoGu](https://explorer.solana.com/address/J5kD2RwveK5w7HjhDZQdiymDDyWH72yjtaYtD55YyoGu?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
+| SOL/USD    | Stork         | [BYYAe2M8fH6zTH1i1kE5C7dyMoH1EqvgkaYJDDxC2zhN](https://explorer.solana.com/address/BYYAe2M8fH6zTH1i1kE5C7dyMoH1EqvgkaYJDDxC2zhN?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
 
 ## Demo
 
