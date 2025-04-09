@@ -109,7 +109,6 @@ async fn run_websocket_client(
     info!("Subscribed to price feeds.");
 
     while let Ok(message) = websocket.read(&mut buf).await {
-        println!("Received message: {}", String::from_utf8_lossy(&buf));
         match message {
             Message::Text => match chain_pusher
                 .process_update(&String::from_utf8_lossy(&buf))
