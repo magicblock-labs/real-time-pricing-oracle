@@ -74,6 +74,8 @@ struct PythSymbol {
     exponent: i32,
     cmc_id: Option<i32>,
     interval: Option<String>,
+    #[serde(flatten)]
+    extra: std::collections::HashMap<String, serde_json::Value>,
 }
 
 impl PythChainPusher {
@@ -108,7 +110,7 @@ impl PythChainPusher {
 
     async fn get_pyth_symbols() -> Result<Vec<PythSymbol>, reqwest::Error> {
         let symbols = reqwest::Client::new()
-            .get("https://pyth-lazer-staging.dourolabs.app/history/v1/symbols")
+            .get("https://history.pyth-lazer.dourolabs.app/history/v1/symbols")
             .send()
             .await?
             .json::<Vec<PythSymbol>>()
