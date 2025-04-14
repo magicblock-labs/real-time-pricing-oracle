@@ -9,7 +9,7 @@ use ephemeral_rollups_sdk::utils::close_pda;
 use ephemeral_rollups_sdk::cpi::DelegateConfig;
 use pyth_solana_receiver_sdk::price_update::{PriceFeedMessage, PriceUpdateV2, VerificationLevel};
 
-declare_id!("orayZ4JuarAK33zEcRUqiKAXgwj7WSC8eKWCwiMHhTQ");
+declare_id!("PriCems5tHihc6UDXDjzjeawomAwBduWMGAi8ZUjppd");
 
 #[ephemeral]
 #[program]

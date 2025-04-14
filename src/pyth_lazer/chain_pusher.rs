@@ -53,7 +53,8 @@ impl ChainPusher for PythChainPusher {
             "priceFeedIds": price_feed_ids,
             "properties": ["price"],
             "chains": ["solana"],
-            "channel": "real_time"
+            "channel": "fixed_rate@50ms"
+            //"channel": "real_time"
         });
         Ok(serde_json::to_string(&subscribe_message).expect("Failed to serialize message"))
     }

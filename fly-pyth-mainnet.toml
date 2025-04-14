@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for ephemeral-pricing-oracle-pyth-lazer-devnet on 2025-04-14T16:09:21+02:00
+# fly.toml app configuration file generated for ephemeral-pricing-oracle-pyth-lazer-tap-trading on 2025-04-14T16:11:59+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'ephemeral-pricing-oracle-pyth-lazer-devnet'
-primary_region = 'nrt'
+app = 'ephemeral-pricing-oracle-pyth-lazer-tap-trading'
+primary_region = 'sin'
 
 [build]
 

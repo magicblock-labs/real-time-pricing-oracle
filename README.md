@@ -75,11 +75,11 @@ pub struct Sample<'info> {
 
 | Asset Pair | Feed Provider | Address                                          |
 |------------|---------------|--------------------------------------------------|
-| SOL/USD    | Pyth Lazer    | [7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D](https://explorer.solana.com/address/7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
-| BTC/USD    | Pyth Lazer    | [74UjNSaPWH8W72HNZDgKiMXkiKt5o2s6evSkVm9CsZpD](https://explorer.solana.com/address/74UjNSaPWH8W72HNZDgKiMXkiKt5o2s6evSkVm9CsZpD?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
+| SOL/USD    | Pyth Lazer    | [ENYwebBThHzmzwPLAQvCucUTsjyfBSZdD9ViXksS4jPu](https://explorer.solana.com/address/ENYwebBThHzmzwPLAQvCucUTsjyfBSZdD9ViXksS4jPu?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
+| BTC/USD    | Pyth Lazer    | [71wtTRDY8Gxgw56bXFt2oc6qeAbTxzStdNiC425Z51sr](https://explorer.solana.com/address/71wtTRDY8Gxgw56bXFt2oc6qeAbTxzStdNiC425Z51sr?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
 | ETH/USD    | Pyth Lazer    | [NY1S3R56xVou4YTAmUxXjvKwNmYgQXeWPqFmLss4ihg](https://explorer.solana.com/address/NY1S3R56xVou4YTAmUxXjvKwNmYgQXeWPqFmLss4ihg?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
-| USDC/USD   | Pyth Lazer    | [J5kD2RwveK5w7HjhDZQdiymDDyWH72yjtaYtD55YyoGu](https://explorer.solana.com/address/J5kD2RwveK5w7HjhDZQdiymDDyWH72yjtaYtD55YyoGu?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
-| SOL/USD    | Stork         | [BYYAe2M8fH6zTH1i1kE5C7dyMoH1EqvgkaYJDDxC2zhN](https://explorer.solana.com/address/BYYAe2M8fH6zTH1i1kE5C7dyMoH1EqvgkaYJDDxC2zhN?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
+| USDC/USD   | Pyth Lazer    | [Ekug3x6hs37Mf4XKCDptvRVCSCjJCAD7LKmKQXBAa541](https://explorer.solana.com/address/Ekug3x6hs37Mf4XKCDptvRVCSCjJCAD7LKmKQXBAa541?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
+| SOL/USD    | Stork         | [5vaYr1hpv8yrSpu8w3K95x22byYxUJCCNCSYJtqVWPvG](https://explorer.solana.com/address/5vaYr1hpv8yrSpu8w3K95x22byYxUJCCNCSYJtqVWPvG?cluster=custom&customUrl=https%3A%2F%2Fdevnet.magicblock.app) |
 
 ## Demo
 

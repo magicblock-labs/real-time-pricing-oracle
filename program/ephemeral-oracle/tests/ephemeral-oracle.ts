@@ -29,7 +29,6 @@ describe("ephemeral-oracle", () => {
   it("Initialize price feed!", async () => {
     const tx = await program.methods.initializePriceFeed("stork-oracle", "SOLUSD", Array.from(exampleFeedAddress.toBytes()), 18).accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: exampleFeedAddress,
     }).rpc();
     console.log("Initialize price feed signature", tx);
   });
@@ -37,7 +36,6 @@ describe("ephemeral-oracle", () => {
   it("Initialize price feed 2!", async () => {
     const tx = await program.methods.initializePriceFeed("pyth-lazer", "2", Array.from(exampleFeedAddress2.toBytes()), 8).accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: exampleFeedAddress2,
     }).rpc();
     console.log("Initialize price feed signature", tx);
   });
@@ -58,7 +56,6 @@ describe("ephemeral-oracle", () => {
     };
     const tx = await program.methods.updatePriceFeed("stork-oracle", updateData).accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: exampleFeedAddress,
     }).rpc();
     console.log("Update price feed signature", tx);
   });
@@ -66,15 +63,13 @@ describe("ephemeral-oracle", () => {
   it("Delegate price feed 1!", async () => {
     const tx = await program.methods.delegatePriceFeed("stork-oracle", "SOLUSD").accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: exampleFeedAddress,
     }).rpc();
     console.log("Delegate price feed signature", tx);
   });
 
   it("Delegate price feed 2!", async () => {
-    const tx = await program.methods.delegatePriceFeed("pyth-lazer", "2").accounts({
+    const tx = await program.methods.delegatePriceFeed("pyth-lazer", "6").accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: exampleFeedAddress2,
     }).rpc();
     console.log("Delegate price feed signature", tx);
   });
@@ -90,7 +85,6 @@ describe("ephemeral-oracle", () => {
   it("Close price feed!", async () => {
     const tx = await program.methods.closePriceFeed("pyth-lazer", "2").accounts({
       payer: anchor.getProvider().publicKey,
-      priceFeed: exampleFeedAddress2,
     }).rpc({skipPreflight: true});
     console.log("Delegate price feed signature", tx);
   });
