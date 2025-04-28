@@ -102,8 +102,13 @@ impl PythChainPusher {
         };
         let rpc_client = self.rpc_client.get_inner_client().clone();
         tokio::spawn(async move {
-            if let Ok(signature) = rpc_client.send_transaction_with_config(&tx, options).await {
-                info!("\nTransaction sent: {}", signature);
+            match rpc_client.send_transaction_with_config(&tx, options).await {
+                Ok(signature) => {
+                    info!("\nTransaction sent: {}", signature);
+                },
+                Err(err) => {
+                    info!("\nTransaction error: {}", err);
+                }
             }
         });
         Ok(())

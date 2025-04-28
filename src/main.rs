@@ -115,7 +115,9 @@ async fn run_websocket_client(
                 .await
             {
                 Ok(..) => debug!("Processed price updates"),
-                Err(e) => warn!(error = ?e, "Failed to parse price update"),
+                Err(e) => {
+                    warn!(error = ?e, message = %String::from_utf8_lossy(&buf), "Failed to parse price update")
+                }
             },
             Message::Close(_) => return Err("WebSocket closed".into()),
             _ => {}
