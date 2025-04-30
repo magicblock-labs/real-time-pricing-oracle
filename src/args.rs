@@ -1,5 +1,28 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use solana_sdk::signature::Keypair;
+
+#[derive(Debug, Clone, ValueEnum)]
+pub enum ChannelType {
+    #[value(name = "real_time")]
+    RealTime,
+    #[value(name = "fixed_rate@1ms")]
+    FixedRate1ms,
+    #[value(name = "fixed_rate@50ms")]
+    FixedRate50ms,
+    #[value(name = "fixed_rate@200ms")]
+    FixedRate200ms,
+}
+
+impl std::fmt::Display for ChannelType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ChannelType::RealTime => write!(f, "real_time"),
+            ChannelType::FixedRate1ms => write!(f, "fixed_rate@1ms"),
+            ChannelType::FixedRate50ms => write!(f, "fixed_rate@50ms"),
+            ChannelType::FixedRate200ms => write!(f, "fixed_rate@200ms"),
+        }
+    }
+}
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -14,6 +37,11 @@ pub struct Args {
     pub cluster: Option<String>,
     #[arg(long, help = "Comma-separated list of price feeds")]
     pub price_feeds: Option<String>,
+    #[arg(
+        long,
+        help = "Channel of the WebSocket to subscribe to (real_time, fixed_rate@1ms, fixed_rate@50ms, fixed_rate@200ms)"
+    )]
+    pub channel: Option<ChannelType>,
 }
 
 pub fn get_ws_url(cli_url: Option<String>) -> String {
@@ -54,4 +82,21 @@ pub fn get_private_key(cli_key: Option<String>) -> String {
         .ok()
         .or(cli_key)
         .unwrap_or(Keypair::new().to_base58_string())
+}
+
+pub fn get_channel(cli_channel: Option<ChannelType>) -> String {
+    std::env::var("ORACLE_CHANNEL")
+        .ok()
+        .and_then(|env_channel| {
+            match env_channel.to_lowercase().as_str() {
+                "real_time" => Some(ChannelType::RealTime),
+                "fixed_rate@1ms" => Some(ChannelType::FixedRate1ms),
+                "fixed_rate@50ms" => Some(ChannelType::FixedRate50ms),
+                "fixed_rate@200ms" => Some(ChannelType::FixedRate200ms),
+                _ => panic!("ORACLE_CHANNEL environment variable must be one of the following: real_time, fixed_rate@1ms, fixed_rate@50ms, fixed_rate@200ms"),
+            }
+        })
+        .or(cli_channel)
+        .unwrap_or(ChannelType::FixedRate50ms)
+        .to_string()
 }

@@ -27,9 +27,7 @@ use tokio_native_tls::TlsConnector;
 use tracing::{debug, error, info, warn};
 use url::Url;
 
-use crate::args::{
-    get_auth_header, get_price_feeds, get_private_key, get_solana_cluster, get_ws_url, Args,
-};
+use crate::args::{get_auth_header, get_channel, get_price_feeds, get_private_key, get_solana_cluster, get_ws_url, Args};
 use crate::pyth_lazer::chain_pusher::PythChainPusher;
 use crate::stork::chain_pusher::StorkChainPusher;
 use crate::types::ChainPusher;
@@ -44,6 +42,7 @@ async fn main() {
     let ws_url = get_ws_url(args.ws_url);
     let cluster_url = get_solana_cluster(args.cluster);
     let price_feeds = get_price_feeds(args.price_feeds);
+    let channel = get_channel(args.channel);
 
     let payer = Keypair::from_base58_string(&private_key);
     info!(wallet_pubkey = ?payer.pubkey(), "Identity initialized");
@@ -56,7 +55,7 @@ async fn main() {
 
     loop {
         if let Err(e) =
-            run_websocket_client(&chain_pusher, &ws_url, &auth_header, &price_feeds).await
+            run_websocket_client(&chain_pusher, &ws_url, &auth_header, &price_feeds, &channel).await
         {
             error!(error = ?e, "WebSocket connection error, attempting reconnection");
         }
@@ -69,6 +68,7 @@ async fn run_websocket_client(
     url: &str,
     auth_header: &str,
     price_feeds: &[String],
+    channel: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(url = %url, "Establishing WebSocket connection");
 
@@ -98,7 +98,7 @@ async fn run_websocket_client(
     info!("WebSocket connected.");
 
     let mut buf = BytesMut::new();
-    let message_text = chain_pusher.feeds_subscription_msg(price_feeds).await?;
+    let message_text = chain_pusher.feeds_subscription_msg(price_feeds, channel).await?;
 
     info!(message = %message_text, "Subscribing to price feeds");
 

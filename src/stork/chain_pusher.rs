@@ -35,6 +35,7 @@ impl ChainPusher for StorkChainPusher {
     async fn feeds_subscription_msg(
         &self,
         price_feeds: &[String],
+        _channel: &str,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let subscribe_message = serde_json::json!({
             "type": "subscribe",
