@@ -22,9 +22,9 @@ while [ "$i" -lt "$SYMBOLS_COUNT" ]; do
 
     cat >> /etc/supervisor/conf.d/real_time_pricing_oracle.conf <<EOL
 [program:symbol-fetcher-$COUNTER]
-command=env ORACLE_WS_URL="wss://pyth-lazer.dourolabs.app/v1/stream" \
-        ORACLE_AUTH_HEADER="Bearer qyfk9GJqmyYxjfW8ANUplSsnMnMa64Ai0XK-mgbl" \
-        SOLANA_CLUSTER="http://localhost:8899" \
+command=env ORACLE_WS_URL="$ORACLE_WS_URL" \
+        ORACLE_AUTH_HEADER="$ORACLE_AUTH_HEADER" \
+        SOLANA_CLUSTER="$ORACLE_SOLANA_CLUSTER" \
         ORACLE_PRICE_FEEDS="$PRICE_FEEDS" \
         ORACLE_CHANNEL="$CHANNEL" \
         ephemeral-pricing-oracle
