@@ -85,18 +85,28 @@ pub fn get_private_key(cli_key: Option<String>) -> String {
 }
 
 pub fn get_channel(cli_channel: Option<ChannelType>) -> String {
+    let valid_values = ChannelType::value_variants()
+        .iter()
+        .map(|v| v.to_string())
+        .collect::<Vec<_>>();
+
     std::env::var("ORACLE_CHANNEL")
-        .ok()
-        .and_then(|env_channel| {
-            match env_channel.to_lowercase().as_str() {
-                "real_time" => Some(ChannelType::RealTime),
-                "fixed_rate@1ms" => Some(ChannelType::FixedRate1ms),
-                "fixed_rate@50ms" => Some(ChannelType::FixedRate50ms),
-                "fixed_rate@200ms" => Some(ChannelType::FixedRate200ms),
-                _ => panic!("ORACLE_CHANNEL environment variable must be one of the following: real_time, fixed_rate@1ms, fixed_rate@50ms, fixed_rate@200ms"),
-            }
+        .map(|env_channel| {
+            ChannelType::value_variants()
+                .iter()
+                .find(|variant| {
+                    variant.to_string().eq_ignore_ascii_case(&env_channel)
+                })
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| {
+                    panic!(
+                        "Invalid ORACLE_CHANNEL value: '{}'. Accepted values: {}",
+                        env_channel,
+                        valid_values.join(", ")
+                    )
+                })
         })
-        .or(cli_channel)
-        .unwrap_or(ChannelType::FixedRate50ms)
-        .to_string()
+        .ok()
+        .or(cli_channel.map(|c| c.to_string()))
+        .unwrap_or_else(|| ChannelType::FixedRate50ms.to_string())
 }
