@@ -36,6 +36,7 @@ impl ChainPusher for PythChainPusher {
     async fn feeds_subscription_msg(
         &self,
         price_feeds: &[String],
+        channel: &str,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let symbols = PythChainPusher::get_pyth_symbols().await?;
         let price_feed_ids: Vec<i32> = price_feeds
@@ -53,7 +54,7 @@ impl ChainPusher for PythChainPusher {
             "priceFeedIds": price_feed_ids,
             "properties": ["price"],
             "chains": ["solana"],
-            "channel": "fixed_rate@50ms"
+            "channel": channel,
             //"channel": "real_time"
         });
         Ok(serde_json::to_string(&subscribe_message).expect("Failed to serialize message"))

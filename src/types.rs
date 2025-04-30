@@ -31,6 +31,7 @@ pub trait ChainPusher {
     async fn feeds_subscription_msg(
         &self,
         price_feeds: &[String],
+        channel: &str,
     ) -> Result<String, Box<dyn std::error::Error>>;
 
     async fn process_update(&self, message: &str) -> Result<(), Box<dyn std::error::Error>>;
