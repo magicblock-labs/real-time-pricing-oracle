@@ -1,12 +1,10 @@
 #!/bin/sh
 
-SYMBOLS_URL="https://history.pyth-lazer.dourolabs.app/history/v1/symbols"
+SYMBOLS_FILE="pyth_lazer_list.json"
 TMP_FILE=$(mktemp)
 
-# Download and save to temporary file
-curl -s "$SYMBOLS_URL" | jq -c '.[:40]' > "$TMP_FILE"
+jq -c '.' "$SYMBOLS_FILE" > "$TMP_FILE"
 
-# Count symbols
 SYMBOLS_COUNT=$(jq -r 'length' "$TMP_FILE")
 
 mkdir -p /etc/supervisor/conf.d
