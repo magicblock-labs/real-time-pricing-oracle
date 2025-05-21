@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SYMBOLS_FILE="pyth_lazer_list.json"
+SYMBOLS_FILE="/usr/local/bin/pyth_lazer_list.json"
 TMP_FILE=$(mktemp)
 
 jq -c '.' "$SYMBOLS_FILE" > "$TMP_FILE"
