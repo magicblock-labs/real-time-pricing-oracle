@@ -1443,19 +1443,6 @@
     "state": "stable"
   },
   {
-    "pyth_lazer_id": 162,
-    "name": "GIGAUSD",
-    "symbol": "Crypto.GIGA/USD",
-    "description": "GIGACHAD (GIGACHADSOLANA.COM) / US Dollar",
-    "asset_type": "crypto",
-    "exponent": -8,
-    "cmc_id": 30063,
-    "interval": null,
-    "min_publishers": 1,
-    "min_channel": "fixed_rate@200ms",
-    "state": "coming_soon"
-  },
-  {
     "pyth_lazer_id": 171,
     "name": "AI16ZUSD",
     "symbol": "Crypto.AI16Z/USD",
@@ -1480,19 +1467,6 @@
     "min_publishers": 1,
     "min_channel": "fixed_rate@200ms",
     "state": "stable"
-  },
-  {
-    "pyth_lazer_id": 178,
-    "name": "MATICUSD",
-    "symbol": "Crypto.MATIC/USD",
-    "description": "POLYGON / US Dollar",
-    "asset_type": "crypto",
-    "exponent": -8,
-    "cmc_id": 3890,
-    "interval": null,
-    "min_publishers": 1,
-    "min_channel": "fixed_rate@200ms",
-    "state": "coming_soon"
   },
   {
     "pyth_lazer_id": 179,
@@ -1521,19 +1495,6 @@
     "state": "stable"
   },
   {
-    "pyth_lazer_id": 188,
-    "name": "SPXUSD",
-    "symbol": "Crypto.SPX/USD",
-    "description": "SPX6900 / US Dollar",
-    "asset_type": "crypto",
-    "exponent": -8,
-    "cmc_id": 28081,
-    "interval": null,
-    "min_publishers": 1,
-    "min_channel": "fixed_rate@200ms",
-    "state": "coming_soon"
-  },
-  {
     "pyth_lazer_id": 201,
     "name": "ONDOUSD",
     "symbol": "Crypto.ONDO/USD",
@@ -1560,19 +1521,6 @@
     "state": "stable"
   },
   {
-    "pyth_lazer_id": 217,
-    "name": "KEYCATUSD",
-    "symbol": "Crypto.KEYCAT/USD",
-    "description": "KEYBOARD CAT / US DOLLAR",
-    "asset_type": "crypto",
-    "exponent": -8,
-    "cmc_id": 30637,
-    "interval": null,
-    "min_publishers": 1,
-    "min_channel": "fixed_rate@200ms",
-    "state": "coming_soon"
-  },
-  {
     "pyth_lazer_id": 218,
     "name": "DOGINMEUSD",
     "symbol": "Crypto.DOGINME/USD",
@@ -1584,19 +1532,6 @@
     "min_publishers": 1,
     "min_channel": "fixed_rate@200ms",
     "state": "stable"
-  },
-  {
-    "pyth_lazer_id": 235,
-    "name": "MPLXUSD",
-    "symbol": "Crypto.MPLX/USD",
-    "description": "METAPLEX / US DOLLAR",
-    "asset_type": "crypto",
-    "exponent": -8,
-    "cmc_id": 21870,
-    "interval": null,
-    "min_publishers": 1,
-    "min_channel": "fixed_rate@200ms",
-    "state": "coming_soon"
   },
   {
     "pyth_lazer_id": 239,
@@ -1636,32 +1571,6 @@
     "min_publishers": 1,
     "min_channel": "fixed_rate@200ms",
     "state": "stable"
-  },
-  {
-    "pyth_lazer_id": 268,
-    "name": "BORGUSD",
-    "symbol": "Crypto.BORG/USD",
-    "description": "SWISSBORG / US DOLLAR",
-    "asset_type": "crypto",
-    "exponent": -8,
-    "cmc_id": 2499,
-    "interval": null,
-    "min_publishers": 1,
-    "min_channel": "fixed_rate@200ms",
-    "state": "coming_soon"
-  },
-  {
-    "pyth_lazer_id": 298,
-    "name": "DOGUSD",
-    "symbol": "Crypto.DOG/USD",
-    "description": "DOG (BITCOIN) / US DOLLAR",
-    "asset_type": "crypto",
-    "exponent": -8,
-    "cmc_id": 30933,
-    "interval": null,
-    "min_publishers": 1,
-    "min_channel": "fixed_rate@200ms",
-    "state": "coming_soon"
   },
   {
     "pyth_lazer_id": 305,
