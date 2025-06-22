@@ -95,7 +95,7 @@ wscat -c "wss://devnet.magicblock.app"
 Subscribe:
 
 ```bash
-{"jsonrpc":"2.0","id":1,"method":"accountSubscribe","params":["7AxV2515SwLFVxWSpCngQ3TNqY17JERwcCfULc464u7D",{"encoding":"jsonParsed","commitment":"confirmed"}]}
+{"jsonrpc":"2.0","id":1,"method":"accountSubscribe","params":["ENYwebBThHzmzwPLAQvCucUTsjyfBSZdD9ViXksS4jPu",{"encoding":"jsonParsed","commitment":"confirmed"}]}
 ```
 
 
