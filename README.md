@@ -18,7 +18,7 @@ The project is structured as follows:
 ## Running the chain pusher
 
 ```bash
-cargo run -- --auth_header "Bearer <your_auth_token>" --ws_url "ws_url" --cluster "https://devnet.magicblock.app"
+cargo run -- --auth-header "Bearer <your_auth_token>" --ws-urld "ws_url1,ws_url2" --cluster "https://devnet.magicblock.app"
 ```
 
 ## Consuming Price Data in a Solana Program

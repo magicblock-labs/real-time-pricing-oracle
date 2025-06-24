@@ -1,5 +1,6 @@
 use clap::{Parser, ValueEnum};
 use solana_sdk::signature::Keypair;
+use tracing::warn;
 
 #[derive(Debug, Clone, ValueEnum)]
 pub enum ChannelType {
@@ -31,8 +32,18 @@ pub struct Args {
     pub private_key: Option<String>,
     #[arg(long, help = "Authorization header for the WebSocket connection")]
     pub auth_header: Option<String>,
-    #[arg(long, help = "WebSocket URL for the price feed")]
+
+    #[arg(long,
+        help = "DEPRECATED: Single WebSocket URL for the price feed",
+        conflicts_with = "ws_urls",
+        hide = true)]
     pub ws_url: Option<String>,
+
+    #[arg(long,
+        help = "Comma-separated list of WebSocket URLs for the price feed",
+        value_delimiter = ',')]
+    pub ws_urls: Vec<String>,
+
     #[arg(long, help = "Solana cluster URL")]
     pub cluster: Option<String>,
     #[arg(long, help = "Comma-separated list of price feeds")]
@@ -44,11 +55,22 @@ pub struct Args {
     pub channel: Option<ChannelType>,
 }
 
-pub fn get_ws_url(cli_url: Option<String>) -> String {
-    std::env::var("ORACLE_WS_URL")
-        .ok()
-        .or(cli_url)
-        .unwrap_or_else(|| "ws://localhost:8765".to_string())
+pub fn get_ws_urls(cli_url: Option<String>, cli_urls: Vec<String>) -> Vec<String> {
+    if cli_url.is_some() {
+        warn!("'--ws-url' is deprecated, use '--ws-urls' with comma-separated list instead");
+    }
+    
+    let env_url = std::env::var("ORACLE_WS_URL").ok();
+    
+    if !cli_urls.is_empty() {
+        cli_urls
+    } else {
+        let single_url = cli_url
+            .or(env_url)
+            .unwrap_or_else(|| "ws://localhost:8765".to_string());
+
+        vec![single_url]
+    }
 }
 
 pub fn get_auth_header(cli_auth: Option<String>) -> String {

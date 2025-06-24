@@ -27,7 +27,7 @@ use tokio_native_tls::TlsConnector;
 use tracing::{debug, error, info, warn};
 use url::Url;
 
-use crate::args::{get_auth_header, get_channel, get_price_feeds, get_private_key, get_solana_cluster, get_ws_url, Args};
+use crate::args::{get_auth_header, get_channel, get_price_feeds, get_private_key, get_solana_cluster, get_ws_urls, Args};
 use crate::pyth_lazer::chain_pusher::PythChainPusher;
 use crate::stork::chain_pusher::StorkChainPusher;
 use crate::types::ChainPusher;
@@ -39,7 +39,7 @@ async fn main() {
     let args = Args::parse();
     let private_key = get_private_key(args.private_key);
     let auth_header = get_auth_header(args.auth_header);
-    let ws_url = get_ws_url(args.ws_url);
+    let ws_urls = get_ws_urls(args.ws_url, args.ws_urls);
     let cluster_url = get_solana_cluster(args.cluster);
     let price_feeds = get_price_feeds(args.price_feeds);
     let channel = get_channel(args.channel);
@@ -47,19 +47,30 @@ async fn main() {
     let payer = Keypair::from_base58_string(&private_key);
     info!(wallet_pubkey = ?payer.pubkey(), "Identity initialized");
 
-    let chain_pusher: Arc<dyn ChainPusher> = if ws_url.contains("stork") {
+    let chain_pusher: Arc<dyn ChainPusher> = if ws_urls.iter().any(|url| url.contains("stork")) {
         Arc::new(StorkChainPusher::new(&cluster_url, payer).await)
     } else {
         Arc::new(PythChainPusher::new(&cluster_url, payer).await)
     };
 
     loop {
-        if let Err(e) =
-            run_websocket_client(&chain_pusher, &ws_url, &auth_header, &price_feeds, &channel).await
-        {
-            error!(error = ?e, "WebSocket connection error, attempting reconnection");
+        let mut last_error = None;
+
+        for ws_url in &ws_urls {
+            match run_websocket_client(&chain_pusher, ws_url, &auth_header, &price_feeds, &channel).await {
+                Ok(_) => break,
+                Err(e) => {
+                    error!(error = ?e, url = ws_url, "WebSocket connection failed, trying next URL");
+                    last_error = Some(e);
+                }
+            }
         }
-        time::sleep(Duration::from_secs(5)).await;
+
+        // if all URLs fail, wait before trying again
+        if let Some(e) = last_error {
+            error!(error = ?e, "All WebSocket URLs failed, retrying in 5 seconds");
+            time::sleep(Duration::from_secs(5)).await;
+        }
     }
 }
 
