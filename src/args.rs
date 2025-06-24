@@ -59,16 +59,22 @@ pub fn get_ws_urls(cli_url: Option<String>, cli_urls: Vec<String>) -> Vec<String
     if cli_url.is_some() {
         warn!("'--ws-url' is deprecated, use '--ws-urls' with comma-separated list instead");
     }
-    
+
     let env_url = std::env::var("ORACLE_WS_URL").ok();
-    
+    let env_urls = std::env::var("ORACLE_WS_URLS").ok();
+
     if !cli_urls.is_empty() {
         cli_urls
+    } else if let Some(urls_str) = env_urls {
+        urls_str
+            .split(',')
+            .map(|url| url.trim().to_string())
+            .filter(|url| !url.is_empty())
+            .collect()
     } else {
         let single_url = cli_url
             .or(env_url)
             .unwrap_or_else(|| "ws://localhost:8765".to_string());
-
         vec![single_url]
     }
 }
