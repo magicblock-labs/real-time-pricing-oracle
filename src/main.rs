@@ -34,7 +34,9 @@ use crate::types::ChainPusher;
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt().init();
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
     dotenvy::dotenv().ok();
     let args = Args::parse();
     let private_key = get_private_key(args.private_key);
