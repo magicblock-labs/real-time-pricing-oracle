@@ -21,6 +21,7 @@ while [ "$i" -lt "$SYMBOLS_COUNT" ]; do
     cat >> /etc/supervisor/conf.d/real_time_pricing_oracle.conf <<EOL
 [program:symbol-fetcher-$COUNTER]
 command=env ORACLE_WS_URL="$ORACLE_WS_URL" \
+        ORACLE_PRIVATE_KEY="$ORACLE_PRIVATE_KEY" \
         ORACLE_AUTH_HEADER="$ORACLE_AUTH_HEADER" \
         SOLANA_CLUSTER="$ORACLE_SOLANA_CLUSTER" \
         ORACLE_PRICE_FEEDS="$PRICE_FEEDS" \
