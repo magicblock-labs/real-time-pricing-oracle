@@ -98,6 +98,11 @@ Subscribe:
 {"jsonrpc":"2.0","id":1,"method":"accountSubscribe","params":["ENYwebBThHzmzwPLAQvCucUTsjyfBSZdD9ViXksS4jPu",{"encoding":"jsonParsed","commitment":"confirmed"}]}
 ```
 
+### Running tests
+
+```bash
+anchor test -- --features test-mode
+```
 
 
 

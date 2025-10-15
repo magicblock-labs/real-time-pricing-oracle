@@ -27,7 +27,10 @@ use tokio_native_tls::TlsConnector;
 use tracing::{debug, error, info, warn};
 use url::Url;
 
-use crate::args::{get_auth_header, get_channel, get_price_feeds, get_private_key, get_solana_cluster, get_ws_urls, Args};
+use crate::args::{
+    get_auth_header, get_channel, get_price_feeds, get_private_key, get_solana_cluster,
+    get_ws_urls, Args,
+};
 use crate::pyth_lazer::chain_pusher::PythChainPusher;
 use crate::stork::chain_pusher::StorkChainPusher;
 use crate::types::ChainPusher;
@@ -59,7 +62,9 @@ async fn main() {
         let mut last_error = None;
 
         for ws_url in &ws_urls {
-            match run_websocket_client(&chain_pusher, ws_url, &auth_header, &price_feeds, &channel).await {
+            match run_websocket_client(&chain_pusher, ws_url, &auth_header, &price_feeds, &channel)
+                .await
+            {
                 Ok(_) => break,
                 Err(e) => {
                     error!(error = ?e, url = ws_url, "WebSocket connection failed, trying next URL");
@@ -111,7 +116,9 @@ async fn run_websocket_client(
     info!("WebSocket connected.");
 
     let mut buf = BytesMut::new();
-    let message_text = chain_pusher.feeds_subscription_msg(price_feeds, channel).await?;
+    let message_text = chain_pusher
+        .feeds_subscription_msg(price_feeds, channel)
+        .await?;
 
     info!(message = %message_text, "Subscribing to price feeds");
 

@@ -33,15 +33,19 @@ pub struct Args {
     #[arg(long, help = "Authorization header for the WebSocket connection")]
     pub auth_header: Option<String>,
 
-    #[arg(long,
+    #[arg(
+        long,
         help = "DEPRECATED: Single WebSocket URL for the price feed",
         conflicts_with = "ws_urls",
-        hide = true)]
+        hide = true
+    )]
     pub ws_url: Option<String>,
 
-    #[arg(long,
+    #[arg(
+        long,
         help = "Comma-separated list of WebSocket URLs for the price feed",
-        value_delimiter = ',')]
+        value_delimiter = ','
+    )]
     pub ws_urls: Vec<String>,
 
     #[arg(long, help = "Solana cluster URL")]
@@ -122,9 +126,7 @@ pub fn get_channel(cli_channel: Option<ChannelType>) -> String {
         .map(|env_channel| {
             ChannelType::value_variants()
                 .iter()
-                .find(|variant| {
-                    variant.to_string().eq_ignore_ascii_case(&env_channel)
-                })
+                .find(|variant| variant.to_string().eq_ignore_ascii_case(&env_channel))
                 .map(|v| v.to_string())
                 .unwrap_or_else(|| {
                     panic!(

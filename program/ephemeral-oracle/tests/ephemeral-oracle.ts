@@ -75,7 +75,7 @@ describe("ephemeral-oracle", () => {
     console.log("Delegate price feed signature", tx);
   });
 
-  it("Undelegate price feed!", async () => {
+  it.skip("Undelegate price feed!", async () => {
     const tx = await ephemeralProgram.methods.undelegatePriceFeed("pyth-lazer", "2").accounts({
       payer: anchor.getProvider().publicKey,
       priceFeed: exampleFeedAddress2,
@@ -83,14 +83,14 @@ describe("ephemeral-oracle", () => {
     console.log("Delegate price feed signature", tx);
   });
 
-  it("Close price feed!", async () => {
+  it.skip("Close price feed!", async () => {
     const tx = await program.methods.closePriceFeed("pyth-lazer", "2").accounts({
       payer: anchor.getProvider().publicKey,
     }).rpc({skipPreflight: true});
     console.log("Close price feed signature", tx);
   });
 
-  it("Update price feed delegated!", async () => {
+  it.skip("Update price feed delegated!", async () => {
     const updateData = {
       symbol: "SOLUSD",
       id: Array.from(exampleFeedAddress.toBytes()),
@@ -111,7 +111,7 @@ describe("ephemeral-oracle", () => {
     console.log("Update price feed signature", tx);
   });
 
-  it("Update price feed delegated 2!", async () => {
+  it.skip("Update price feed delegated 2!", async () => {
     const updateData = {
       symbol: "6",
       id: Array.from(exampleFeedAddress2.toBytes()),

@@ -106,7 +106,7 @@ impl PythChainPusher {
             match rpc_client.send_transaction_with_config(&tx, options).await {
                 Ok(signature) => {
                     info!("\nTransaction sent: {}", signature);
-                },
+                }
                 Err(err) => {
                     info!("\nTransaction error: {}", err);
                 }
