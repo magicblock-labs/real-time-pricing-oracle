@@ -75,8 +75,8 @@ async fn main() {
 
         // if all URLs fail, wait before trying again
         if let Some(e) = last_error {
-            error!(error = ?e, "All WebSocket URLs failed, retrying in 5 seconds");
-            time::sleep(Duration::from_secs(5)).await;
+            error!(error = ?e, "All WebSocket URLs failed, retrying in 3 seconds");
+            time::sleep(Duration::from_secs(3)).await;
         }
     }
 }
@@ -128,21 +128,35 @@ async fn run_websocket_client(
 
     info!("Subscribed to price feeds.");
 
-    while let Ok(message) = websocket.read(&mut buf).await {
-        match message {
-            Message::Text => match chain_pusher
-                .process_update(&String::from_utf8_lossy(&buf))
-                .await
-            {
-                Ok(..) => debug!("Processed price updates"),
-                Err(e) => {
-                    warn!(error = ?e, message = %String::from_utf8_lossy(&buf), "Failed to parse price update")
-                }
-            },
-            Message::Close(_) => return Err("WebSocket closed".into()),
-            _ => {}
-        }
+    loop {
         buf.clear();
+        let res = time::timeout(Duration::from_secs(30), websocket.read(&mut buf)).await;
+        match res {
+            Ok(Ok(message)) => match message {
+                Message::Text => {
+                    if let Err(e) = chain_pusher
+                        .process_update(&String::from_utf8_lossy(&buf))
+                        .await
+                    {
+                        warn!(error = ?e, message = %String::from_utf8_lossy(&buf), "Failed to parse price update")
+                    } else {
+                        debug!("Processed price updates");
+                    }
+                }
+                Message::Close(_) => return Err("WebSocket closed".into()),
+                Message::Ping(payload) => {
+                    websocket.write(&payload, PayloadType::Pong).await?;
+                }
+                Message::Pong(_) => {
+                    debug!("Received pong");
+                }
+                _ => {}
+            },
+            Ok(Err(e)) => return Err(e.into()),
+            Err(_) => {
+                debug!("Sending ping");
+                websocket.write(&[], PayloadType::Ping).await?;
+            }
+        }
     }
-    Ok(())
 }

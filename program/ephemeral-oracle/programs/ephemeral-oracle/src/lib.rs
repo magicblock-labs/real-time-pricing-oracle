@@ -70,8 +70,6 @@ pub mod ephemeral_oracle {
         };
         price_feed.verification_level = VerificationLevel::Full;
 
-        msg!("Price: {}", price_feed.price_message.price);
-        msg!("Exponent: {}", price_feed.price_message.exponent);
         Ok(())
     }
 
