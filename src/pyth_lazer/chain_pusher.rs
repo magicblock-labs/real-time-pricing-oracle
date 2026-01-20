@@ -17,6 +17,7 @@ pub struct PythChainPusher {
     payer: Keypair,
     provider: String,
     blockhash_cache: BlockhashCache,
+    http_client: reqwest::Client,
 }
 
 #[async_trait]
@@ -30,6 +31,7 @@ impl ChainPusher for PythChainPusher {
             payer: payer_keypair,
             provider: "pyth-lazer".to_string(),
             blockhash_cache: BlockhashCache::new(rpc_clone).await,
+            http_client: reqwest::Client::new(),
         }
     }
 
@@ -38,7 +40,7 @@ impl ChainPusher for PythChainPusher {
         price_feeds: &[String],
         channel: &str,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let symbols = PythChainPusher::get_pyth_symbols().await?;
+        let symbols = self.get_pyth_symbols().await?;
         let price_feed_ids: Vec<i32> = price_feeds
             .iter()
             .filter_map(|feed| {
@@ -115,8 +117,9 @@ impl PythChainPusher {
         Ok(())
     }
 
-    async fn get_pyth_symbols() -> Result<Vec<PythSymbol>, reqwest::Error> {
-        let symbols = reqwest::Client::new()
+    async fn get_pyth_symbols(&self) -> Result<Vec<PythSymbol>, reqwest::Error> {
+        let symbols = self
+            .http_client
             .get("https://history.pyth-lazer.dourolabs.app/history/v1/symbols")
             .send()
             .await?

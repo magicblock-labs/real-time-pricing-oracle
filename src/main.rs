@@ -52,6 +52,8 @@ async fn main() {
     let payer = Keypair::from_base58_string(&private_key);
     info!(wallet_pubkey = ?payer.pubkey(), "Identity initialized");
 
+    let tls_connector = TlsConnector::from(NativeTlsConnector::new().expect("Failed to create TLS connector"));
+
     let chain_pusher: Arc<dyn ChainPusher> = if ws_urls.iter().any(|url| url.contains("stork")) {
         Arc::new(StorkChainPusher::new(&cluster_url, payer).await)
     } else {
@@ -62,8 +64,15 @@ async fn main() {
         let mut last_error = None;
 
         for ws_url in &ws_urls {
-            match run_websocket_client(&chain_pusher, ws_url, &auth_header, &price_feeds, &channel)
-                .await
+            match run_websocket_client(
+                &chain_pusher,
+                ws_url,
+                &auth_header,
+                &price_feeds,
+                &channel,
+                tls_connector.clone(),
+            )
+            .await
             {
                 Ok(_) => break,
                 Err(e) => {
@@ -87,6 +96,7 @@ async fn run_websocket_client(
     auth_header: &str,
     price_feeds: &[String],
     channel: &str,
+    tls_connector: TlsConnector,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(url = %url, "Establishing WebSocket connection");
 
@@ -101,7 +111,6 @@ async fn run_websocket_client(
         .insert("AUTHORIZATION", HeaderValue::from_str(auth_header)?);
 
     let stream: Box<dyn WebSocketStream> = if url.scheme() == "wss" {
-        let tls_connector = TlsConnector::from(NativeTlsConnector::new()?);
         Box::new(tls_connector.connect(host, stream).await?)
     } else {
         Box::new(stream)
