@@ -1,14 +1,19 @@
 mod state;
 
 use crate::state::UpdateData;
-use anchor_lang::prelude::borsh::BorshSchema;
+use anchor_lang::prelude::borsh::{BorshSchema, BorshSerialize};
 use anchor_lang::prelude::*;
 use anchor_lang::require_keys_eq;
+use anchor_lang::solana_program::instruction::{AccountMeta, Instruction};
+use anchor_lang::solana_program::program::invoke_signed;
+use anchor_lang::solana_program::{system_instruction, system_program};
 use core::mem::size_of;
-use ephemeral_rollups_sdk::anchor::{commit, delegate, ephemeral};
-use ephemeral_rollups_sdk::cpi::DelegateConfig;
+use ephemeral_rollups_sdk::anchor::{commit, ephemeral};
 use ephemeral_rollups_sdk::ephem::commit_and_undelegate_accounts;
-use ephemeral_rollups_sdk::utils::close_pda;
+use ephemeral_rollups_sdk::types::DelegateAccountArgs;
+use ephemeral_rollups_sdk::utils::{
+    close_pda, close_pda_with_system_transfer, create_pda, seeds_with_bump,
+};
 use pyth_solana_receiver_sdk::price_update::{PriceFeedMessage, PriceUpdateV2, VerificationLevel};
 
 declare_id!("PriCems5tHihc6UDXDjzjeawomAwBduWMGAi8ZUjppd");
@@ -16,6 +21,7 @@ declare_id!("PriCems5tHihc6UDXDjzjeawomAwBduWMGAi8ZUjppd");
 #[cfg(not(feature = "test-mode"))]
 const ORACLE_IDENTITY: Pubkey = pubkey!("MPUxHCpNUy3K1CSVhebAmTbcTCKVxfk9YMDcUP2ZnEA");
 const SEED_PREFIX: &[u8] = b"price_feed";
+const DELEGATE_WITH_ANY_VALIDATOR_DISCRIMINATOR: u8 = 19;
 
 #[ephemeral]
 #[program]
@@ -80,11 +86,110 @@ pub mod ephemeral_oracle {
     ) -> Result<()> {
         ensure_oracle(&ctx.accounts.payer)?;
 
-        ctx.accounts.delegate_price_feed(
-            &ctx.accounts.payer,
-            &[SEED_PREFIX, provider.as_bytes(), symbol.as_bytes()],
-            DelegateConfig::default(),
+        let pda_seeds: &[&[u8]] = &[SEED_PREFIX, provider.as_bytes(), symbol.as_bytes()];
+        let price_feed_key = ctx.accounts.price_feed.key();
+        let buffer_seeds: &[&[u8]] = &[b"buffer", price_feed_key.as_ref()];
+
+        let (_, delegate_account_bump) =
+            Pubkey::find_program_address(pda_seeds, ctx.accounts.owner_program.key);
+        let (_, buffer_pda_bump) =
+            Pubkey::find_program_address(buffer_seeds, ctx.accounts.owner_program.key);
+
+        let delegate_account_bump_slice: [u8; 1] = [delegate_account_bump];
+        let pda_signer_seed_vec = seeds_with_bump(pda_seeds, &delegate_account_bump_slice);
+        let pda_signer_seeds: &[&[&[u8]]] = &[&pda_signer_seed_vec];
+
+        let buffer_bump_slice: [u8; 1] = [buffer_pda_bump];
+        let buffer_signer_seed_vec = seeds_with_bump(buffer_seeds, &buffer_bump_slice);
+        let buffer_signer_seeds: &[&[&[u8]]] = &[&buffer_signer_seed_vec];
+
+        let payer_info = ctx.accounts.payer.to_account_info();
+        let system_program_info = ctx.accounts.system_program.to_account_info();
+        let data_len = ctx.accounts.price_feed.data_len();
+
+        create_pda(
+            &ctx.accounts.buffer_price_feed,
+            ctx.accounts.owner_program.key,
+            data_len,
+            buffer_signer_seeds,
+            &system_program_info,
+            &payer_info,
         )?;
+
+        {
+            let pda_ro = ctx.accounts.price_feed.try_borrow_data()?;
+            let mut buf = ctx.accounts.buffer_price_feed.try_borrow_mut_data()?;
+            buf.copy_from_slice(&pda_ro);
+        }
+
+        {
+            let mut pda_mut = ctx.accounts.price_feed.try_borrow_mut_data()?;
+            pda_mut.fill(0);
+        }
+
+        if ctx.accounts.price_feed.owner != system_program_info.key {
+            ctx.accounts.price_feed.assign(system_program_info.key);
+        }
+
+        if ctx.accounts.price_feed.owner != ctx.accounts.delegation_program.key {
+            invoke_signed(
+                &system_instruction::assign(
+                    ctx.accounts.price_feed.key,
+                    ctx.accounts.delegation_program.key,
+                ),
+                &[ctx.accounts.price_feed.clone(), system_program_info.clone()],
+                pda_signer_seeds,
+            )?;
+        }
+
+        let delegate_args = DelegateAccountArgs {
+            commit_frequency_ms: u32::MAX,
+            seeds: pda_seeds.iter().map(|seed| seed.to_vec()).collect(),
+            validator: Some(system_program::id()),
+        };
+
+        let mut data = (DELEGATE_WITH_ANY_VALIDATOR_DISCRIMINATOR as u64)
+            .to_le_bytes()
+            .to_vec();
+        delegate_args
+            .serialize(&mut data)
+            .map_err(|_| ProgramError::InvalidInstructionData)?;
+
+        let delegation_instruction = Instruction {
+            program_id: ctx.accounts.delegation_program.key(),
+            accounts: vec![
+                AccountMeta::new(ctx.accounts.payer.key(), true),
+                AccountMeta::new(price_feed_key, true),
+                AccountMeta::new_readonly(ctx.accounts.owner_program.key(), false),
+                AccountMeta::new(ctx.accounts.buffer_price_feed.key(), false),
+                AccountMeta::new(ctx.accounts.delegation_record_price_feed.key(), false),
+                AccountMeta::new(ctx.accounts.delegation_metadata_price_feed.key(), false),
+                AccountMeta::new_readonly(system_program::id(), false),
+            ],
+            data,
+        };
+
+        invoke_signed(
+            &delegation_instruction,
+            &[
+                payer_info.clone(),
+                ctx.accounts.price_feed.clone(),
+                ctx.accounts.owner_program.clone(),
+                ctx.accounts.buffer_price_feed.clone(),
+                ctx.accounts.delegation_record_price_feed.clone(),
+                ctx.accounts.delegation_metadata_price_feed.clone(),
+                system_program_info.clone(),
+            ],
+            pda_signer_seeds,
+        )?;
+
+        close_pda_with_system_transfer(
+            &ctx.accounts.buffer_price_feed,
+            buffer_signer_seeds,
+            &payer_info,
+            &system_program_info,
+        )?;
+
         Ok(())
     }
 
@@ -180,7 +285,6 @@ pub struct UpdatePriceFeed<'info> {
     pub price_feed: Account<'info, PriceUpdateV3>,
 }
 
-#[delegate]
 #[derive(Accounts)]
 #[instruction(provider: String, symbol: String)]
 pub struct DelegatePriceFeed<'info> {
@@ -188,11 +292,41 @@ pub struct DelegatePriceFeed<'info> {
     /// CHECK: delegated PDA
     #[account(
         mut,
-        del,
         seeds = [SEED_PREFIX, provider.as_bytes(), symbol.as_bytes()],
         bump
     )]
     pub price_feed: AccountInfo<'info>,
+    /// CHECK: The buffer account
+    #[account(
+        mut,
+        seeds = [b"buffer", price_feed.key().as_ref()],
+        bump,
+        seeds::program = crate::id()
+    )]
+    pub buffer_price_feed: AccountInfo<'info>,
+    /// CHECK: The delegation record account
+    #[account(
+        mut,
+        seeds = [b"delegation", price_feed.key().as_ref()],
+        bump,
+        seeds::program = delegation_program.key()
+    )]
+    pub delegation_record_price_feed: AccountInfo<'info>,
+    /// CHECK: The delegation metadata account
+    #[account(
+        mut,
+        seeds = [b"delegation-metadata", price_feed.key().as_ref()],
+        bump,
+        seeds::program = delegation_program.key()
+    )]
+    pub delegation_metadata_price_feed: AccountInfo<'info>,
+    /// CHECK: The owner program of the delegated account PDA.
+    #[account(address = crate::id())]
+    pub owner_program: AccountInfo<'info>,
+    /// CHECK: The delegation program.
+    #[account(address = ephemeral_rollups_sdk::id())]
+    pub delegation_program: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[commit]
