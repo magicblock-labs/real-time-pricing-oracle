@@ -10,7 +10,7 @@ use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
-use tracing::info;
+use tracing::{error, info};
 
 pub struct PythChainPusher {
     rpc_client: RpcClient,
@@ -110,7 +110,9 @@ impl PythChainPusher {
                     info!("\nTransaction sent: {}", signature);
                 }
                 Err(err) => {
-                    info!("\nTransaction error: {}", err);
+                    // Previously logged at `info!` level, causing monitoring
+                    // systems to miss price-feed transaction failures entirely.
+                    error!("\nTransaction error: {}", err);
                 }
             }
         });
