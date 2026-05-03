@@ -25,6 +25,18 @@ impl std::fmt::Display for ChannelType {
     }
 }
 
+/// The oracle provider / price-feed protocol to use.
+///
+/// Previously the binary detected the provider by checking whether any WebSocket
+/// URL contained the substring `"stork"`. That heuristic silently breaks when
+/// URL hostnames change or when a Pyth URL happens to contain the word "stork".
+/// Use `--provider` to make the selection explicit and deterministic.
+#[derive(Debug, Clone, ValueEnum, PartialEq)]
+pub enum Provider {
+    Stork,
+    Pyth,
+}
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
@@ -57,6 +69,14 @@ pub struct Args {
         help = "Channel of the WebSocket to subscribe to (real_time, fixed_rate@1ms, fixed_rate@50ms, fixed_rate@200ms)"
     )]
     pub channel: Option<ChannelType>,
+    #[arg(
+        long,
+        help = "Price-feed provider to use: stork or pyth. Defaults to pyth. \
+                Previously the provider was inferred by checking whether the WebSocket URL \
+                contained the substring 'stork', which is fragile. Prefer setting this flag explicitly.",
+        value_enum
+    )]
+    pub provider: Option<Provider>,
 }
 
 pub fn get_ws_urls(cli_url: Option<String>, cli_urls: Vec<String>) -> Vec<String> {
@@ -139,4 +159,38 @@ pub fn get_channel(cli_channel: Option<ChannelType>) -> String {
         .ok()
         .or(cli_channel.map(|c| c.to_string()))
         .unwrap_or_else(|| ChannelType::FixedRate50ms.to_string())
+}
+
+/// Determine the oracle provider from the `--provider` flag, the
+/// `ORACLE_PROVIDER` environment variable, or — as a deprecated last resort —
+/// the URL-substring heuristic that was previously hard-coded in `main`.
+pub fn get_provider(cli_provider: Option<Provider>, ws_urls: &[String]) -> Provider {
+    // Explicit CLI flag takes highest priority.
+    if let Some(p) = cli_provider {
+        return p;
+    }
+
+    // Environment variable is second priority.
+    if let Ok(env_val) = std::env::var("ORACLE_PROVIDER") {
+        match env_val.to_lowercase().as_str() {
+            "stork" => return Provider::Stork,
+            "pyth" => return Provider::Pyth,
+            other => warn!(
+                "Unknown ORACLE_PROVIDER value '{}'; falling back to URL detection",
+                other
+            ),
+        }
+    }
+
+    // Last resort: replicate the old URL heuristic so existing deployments
+    // that rely on it continue to work, but emit a deprecation warning.
+    if ws_urls.iter().any(|url| url.contains("stork")) {
+        warn!(
+            "Provider inferred from WebSocket URL containing 'stork'. \
+             This heuristic is fragile; set --provider=stork or ORACLE_PROVIDER=stork explicitly."
+        );
+        Provider::Stork
+    } else {
+        Provider::Pyth
+    }
 }

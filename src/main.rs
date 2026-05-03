@@ -28,8 +28,8 @@ use tracing::{debug, error, info, warn};
 use url::Url;
 
 use crate::args::{
-    get_auth_header, get_channel, get_price_feeds, get_private_key, get_solana_cluster,
-    get_ws_urls, Args,
+    get_auth_header, get_channel, get_price_feeds, get_private_key, get_provider,
+    get_solana_cluster, get_ws_urls, Args, Provider,
 };
 use crate::pyth_lazer::chain_pusher::PythChainPusher;
 use crate::stork::chain_pusher::StorkChainPusher;
@@ -48,16 +48,21 @@ async fn main() {
     let cluster_url = get_solana_cluster(args.cluster);
     let price_feeds = get_price_feeds(args.price_feeds);
     let channel = get_channel(args.channel);
+    let provider = get_provider(args.provider, &ws_urls);
 
     let payer = Keypair::from_base58_string(&private_key);
     info!(wallet_pubkey = ?payer.pubkey(), "Identity initialized");
 
     let tls_connector = TlsConnector::from(NativeTlsConnector::new().expect("Failed to create TLS connector"));
 
-    let chain_pusher: Arc<dyn ChainPusher> = if ws_urls.iter().any(|url| url.contains("stork")) {
-        Arc::new(StorkChainPusher::new(&cluster_url, payer).await)
-    } else {
-        Arc::new(PythChainPusher::new(&cluster_url, payer).await)
+    // Previously the provider was selected by checking whether any WebSocket
+    // URL contained the substring "stork", which silently breaks when URLs
+    // change or a Pyth URL happens to include that word. The provider is now
+    // determined explicitly via `--provider` / `ORACLE_PROVIDER` (with the old
+    // heuristic as a deprecated fallback inside `get_provider`).
+    let chain_pusher: Arc<dyn ChainPusher> = match provider {
+        Provider::Stork => Arc::new(StorkChainPusher::new(&cluster_url, payer).await),
+        Provider::Pyth => Arc::new(PythChainPusher::new(&cluster_url, payer).await),
     };
 
     loop {
