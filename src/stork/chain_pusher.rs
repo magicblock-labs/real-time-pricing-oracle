@@ -9,7 +9,7 @@ use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
-use tracing::info;
+use tracing::{error, info};
 
 pub struct StorkChainPusher {
     rpc_client: RpcClient,
@@ -73,8 +73,15 @@ impl StorkChainPusher {
         };
         let rpc_client = self.rpc_client.get_inner_client().clone();
         tokio::spawn(async move {
-            if let Ok(signature) = rpc_client.send_transaction_with_config(&tx, options).await {
-                info!("\nTransaction sent: {}", signature);
+            // Previously used `if let Ok(...)` which silently discarded all
+            // transaction errors. Use a match so failures are always logged.
+            match rpc_client.send_transaction_with_config(&tx, options).await {
+                Ok(signature) => {
+                    info!("\nTransaction sent: {}", signature);
+                }
+                Err(err) => {
+                    error!("\nTransaction error: {}", err);
+                }
             }
         });
         Ok(())
