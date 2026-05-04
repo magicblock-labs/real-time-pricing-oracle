@@ -120,7 +120,7 @@ impl PythChainPusher {
     async fn get_pyth_symbols(&self) -> Result<Vec<PythSymbol>, reqwest::Error> {
         let symbols = self
             .http_client
-            .get("https://history.pyth-lazer.dourolabs.app/history/v1/symbols")
+            .get("https://pyth.dourolabs.app/history/v1/symbols")
             .send()
             .await?
             .json::<Vec<PythSymbol>>()
