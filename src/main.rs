@@ -52,7 +52,8 @@ async fn main() {
     let payer = Keypair::from_base58_string(&private_key);
     info!(wallet_pubkey = ?payer.pubkey(), "Identity initialized");
 
-    let tls_connector = TlsConnector::from(NativeTlsConnector::new().expect("Failed to create TLS connector"));
+    let tls_connector =
+        TlsConnector::from(NativeTlsConnector::new().expect("Failed to create TLS connector"));
 
     let chain_pusher: Arc<dyn ChainPusher> = if ws_urls.iter().any(|url| url.contains("stork")) {
         Arc::new(StorkChainPusher::new(&cluster_url, payer).await)

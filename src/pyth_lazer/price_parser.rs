@@ -1,5 +1,4 @@
 use crate::types::{SolanaMessage, TemporalNumericValue, UpdateData};
-use base64::Engine;
 use serde_json::Value;
 
 pub fn parse_price_update(message: &str) -> Result<Vec<UpdateData>, Box<dyn std::error::Error>> {
@@ -32,7 +31,19 @@ pub fn parse_price_update(message: &str) -> Result<Vec<UpdateData>, Box<dyn std:
         .as_array()
         .ok_or("priceFeeds is not an array")?;
 
-    let decoded_data = base64::engine::general_purpose::STANDARD.decode(solana_data)?;
+    let solana_encoding = value
+        .get("solana")
+        .and_then(|solana| solana.get("encoding"))
+        .and_then(Value::as_str)
+        .unwrap_or("base64");
+
+    let decoded_data = match solana_encoding {
+        "hex" => hex::decode(solana_data)?,
+        "base64" => {
+            base64::Engine::decode(&base64::engine::general_purpose::STANDARD, solana_data)?
+        }
+        encoding => return Err(format!("Unsupported solana payload encoding: {encoding}").into()),
+    };
     let message = SolanaMessage::deserialize_slice(decoded_data.as_slice())?;
 
     let mut price_updates = Vec::with_capacity(price_feeds.len());

@@ -10,7 +10,9 @@ use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
 };
+use std::collections::HashSet;
 use tracing::info;
+use url::Url;
 
 pub struct PythChainPusher {
     rpc_client: RpcClient,
@@ -40,7 +42,7 @@ impl ChainPusher for PythChainPusher {
         price_feeds: &[String],
         channel: &str,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let symbols = self.get_pyth_symbols().await?;
+        let symbols = self.get_pyth_symbols(price_feeds).await?;
         let price_feed_ids: Vec<i32> = price_feeds
             .iter()
             .filter_map(|feed| {
@@ -50,14 +52,28 @@ impl ChainPusher for PythChainPusher {
                     .map(|symbol| symbol.pyth_lazer_id)
             })
             .collect();
+
+        let found_feeds: HashSet<&str> =
+            symbols.iter().map(|symbol| symbol.name.as_str()).collect();
+        let missing_feeds: Vec<&str> = price_feeds
+            .iter()
+            .map(String::as_str)
+            .filter(|feed| !found_feeds.contains(feed))
+            .collect();
+        if !missing_feeds.is_empty() {
+            return Err(format!("Unknown Pyth price feed(s): {}", missing_feeds.join(", ")).into());
+        }
+
         let subscribe_message = serde_json::json!({
             "type": "subscribe",
             "subscriptionId": 0,
             "priceFeedIds": price_feed_ids,
-            "properties": ["price"],
-            "chains": ["solana"],
+            "properties": ["price", "feedUpdateTimestamp"],
+            "formats": ["solana"],
+            "deliveryFormat": "json",
+            "jsonBinaryEncoding": "hex",
             "channel": channel,
-            //"channel": "real_time"
+            "ignoreInvalidFeeds": true,
         });
         Ok(serde_json::to_string(&subscribe_message).expect("Failed to serialize message"))
     }
@@ -117,14 +133,31 @@ impl PythChainPusher {
         Ok(())
     }
 
-    async fn get_pyth_symbols(&self) -> Result<Vec<PythSymbol>, reqwest::Error> {
-        let symbols = self
-            .http_client
-            .get("https://history.pyth-lazer.dourolabs.app/history/v1/symbols")
-            .send()
-            .await?
-            .json::<Vec<PythSymbol>>()
-            .await?;
+    async fn get_pyth_symbols(
+        &self,
+        price_feeds: &[String],
+    ) -> Result<Vec<PythSymbol>, Box<dyn std::error::Error>> {
+        let mut symbols = Vec::new();
+
+        for feed in price_feeds {
+            let mut url = Url::parse("https://pyth.dourolabs.app/v1/symbols")?;
+            url.query_pairs_mut().append_pair("query", feed);
+
+            let response = self.http_client.get(url).send().await?;
+
+            if !response.status().is_success() {
+                return Err(format!(
+                    "Pyth symbols API returned {} while looking up {}",
+                    response.status(),
+                    feed
+                )
+                .into());
+            }
+
+            let mut matching_symbols = response.json::<Vec<PythSymbol>>().await?;
+            symbols.append(&mut matching_symbols);
+        }
+
         Ok(symbols)
     }
 }
