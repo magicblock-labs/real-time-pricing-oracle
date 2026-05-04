@@ -10,7 +10,7 @@ describe("ephemeral-oracle", () => {
   const program = anchor.workspace.EphemeralOracle as Program<EphemeralOracle>;
 
   const exampleFeedAddress = web3.PublicKey.findProgramAddressSync([Buffer.from("price_feed"), Buffer.from("stork-oracle"), Buffer.from("SOLUSD")], program.programId)[0];
-  // 6 == SOLUSD, from https://history.pyth-lazer.dourolabs.app/history/v1/symbols
+  // 6 == SOLUSD, from https://pyth.dourolabs.app/history/v1/symbols
   // 1 == BTCUSD
   // 2 == ETHUSD
   // 7 == USDCUSD
@@ -153,7 +153,7 @@ describe("ephemeral-oracle", () => {
 
   it.skip("Initialize all the price feeds!", async () => {
     // Fetch symbols from Pyth Lazer API
-    const response = await fetch("https://history.pyth-lazer.dourolabs.app/history/v1/symbols");
+    const response = await fetch("https://pyth.dourolabs.app/history/v1/symbols");
     const symbols = await response.json();
 
     // @ts-ignore
