@@ -71,7 +71,7 @@ pub mod ephemeral_oracle {
         price_feed.price_message = PriceFeedMessage {
             prev_publish_time: prev.publish_time,
             price: new_price,
-            publish_time: clock.unix_timestamp,
+            publish_time: (update_data.temporal_numeric_value.timestamp_ns / 1_000_000_000) as i64,
             ..prev
         };
         price_feed.verification_level = VerificationLevel::Full;
