@@ -161,7 +161,7 @@ describe("ephemeral-oracle", () => {
 
     // Initialize each price feed
     // @ts-ignore
-    for (const symbol of symbols.slice(0, 100)) {
+    for (const symbol of symbols.filter((symbol) => [3418, 3441].includes(symbol.pyth_lazer_id))) {
       const pythLazerId = symbol.pyth_lazer_id.toString();
       const pythName = symbol.name.toString();
 

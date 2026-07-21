@@ -20,4 +20,4 @@ idl-build = ["anchor-lang/idl-build"]
 [dependencies]
 anchor-lang = "=0.31.1"
 ephemeral-rollups-sdk = { version = "0.2.4", features = ["anchor"] }
-pyth-solana-receiver-sdk = "0.6.0"
+pyth-solana-receiver-sdk = "=1.0.1"
