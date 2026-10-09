@@ -64,7 +64,11 @@ pub mod ephemeral_oracle {
         let clock = Clock::get()?;
         let price_feed = &mut ctx.accounts.price_feed;
 
-        let new_price: i64 = update_data.temporal_numeric_value.quantized_value as i64;
+        let quantized = update_data.temporal_numeric_value.quantized_value;
+        if quantized < i64::MIN as i128 || quantized > i64::MAX as i128 {
+            return Err(OracleError::PriceOutOfRange.into());
+        }
+        let new_price: i64 = quantized as i64;
         let prev = price_feed.price_message;
 
         price_feed.posted_slot = clock.slot;
@@ -387,4 +391,6 @@ fn ensure_oracle(payer: &Signer) -> Result<()> {
 pub enum OracleError {
     #[msg("Unauthorized")]
     Unauthorized,
+    #[msg("Price value out of i64 range")]
+    PriceOutOfRange,
 }
